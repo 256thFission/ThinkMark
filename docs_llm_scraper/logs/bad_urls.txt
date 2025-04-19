@@ -1,0 +1,229 @@
+2025-04-19 13:13:09,337 - Unhandled exception: 
+Traceback (most recent call last):
+  File "/home/dev/ThinkMark/docs_llm_scraper/utils.py", line 99, in load_config
+    with open(config_path, 'r') as f:
+         ^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'config.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/dev/ThinkMark/docs_llm_scraper/cli.py", line 75, in main
+    cfg = load_config(config)
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/dev/ThinkMark/docs_llm_scraper/utils.py", line 124, in load_config
+    raise ValueError(f"Error loading config: {str(e)}")
+ValueError: Error loading config: [Errno 2] No such file or directory: 'config.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/dev/ThinkMark/docs_llm_scraper/cli.py", line 83, in main
+    raise typer.Exit(code=1)
+click.exceptions.Exit
+2025-04-19 13:14:07,182 - No URLs mapping found, using filenames
+2025-04-19 13:22:29,988 - No URLs mapping found, using filenames
+2025-04-19 13:22:29,989 - No URL found for en-latest.html, skipping
+2025-04-19 13:23:01,667 - No URLs mapping found, using filenames
+2025-04-19 13:23:01,667 - No URL found for en-latest-index-html.html, skipping
+2025-04-19 13:25:08,741 - Unhandled exception: 
+Traceback (most recent call last):
+  File "/home/dev/ThinkMark/docs_llm_scraper/cli.py", line 71, in main
+    raise typer.Exit(code=1)
+click.exceptions.Exit
+2025-04-19 13:25:56,664 - No URLs mapping found, using filenames
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-building-applications-safety-md-txt.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-references-python-sdk-reference-index-html.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-getting-started-detailed-tutorial-md-txt.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-getting-started-index-html.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-contributing-index-md-txt.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-distributions-self-hosted-distro-tgi-md-txt.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-distributions-remote-hosted-distro-index-html.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-distributions-ondevice-distro-ios-sdk-md-txt.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-providers-index-html.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-distributions-self-hosted-distro-meta-reference-gpu-html.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-distributions-self-hosted-distro-fireworks-html.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-references-evals-reference-index-html.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-providers-vector-io-pgvector-md-txt.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-distributions-ondevice-distro-android-sdk-html.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-contributing-new-api-provider-html.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-references-evals-reference-index-md-txt.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-concepts-index-md-txt.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-building-applications-rag-md-txt.html, skipping
+2025-04-19 13:25:56,664 - No URL found for en-latest-sources-distributions-configuration-md-txt.html, skipping
+2025-04-19 13:25:56,665 - No URL found for en-latest-sources-playground-index-md-txt.html, skipping
+2025-04-19 13:25:56,665 - No URL found for en-latest-distributions-importing-as-library-html.html, skipping
+2025-04-19 13:25:56,665 - No URL found for en-latest-sources-building-applications-agent-execution-loop-md-txt.html, skipping
+2025-04-19 13:25:56,665 - No URL found for en-latest-building-applications-agent-execution-loop-html.html, skipping
+2025-04-19 13:25:56,665 - No URL found for en-latest-sources-providers-vector-io-qdrant-md-txt.html, skipping
+2025-04-19 13:25:56,665 - No URL found for en-latest-references-llama-cli-reference-download-models-html.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-building-applications-rag-html.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-sources-building-applications-tools-md-txt.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-distributions-building-distro-html.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-sources-distributions-importing-as-library-md-txt.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-sources-providers-vector-io-weaviate-md-txt.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-building-applications-evals-html.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-sources-providers-vector-io-sqlite-vec-md-txt.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-references-llama-cli-reference-index-html.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-providers-external-html.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-sources-references-api-reference-index-md-txt.html, skipping
+2025-04-19 13:25:56,666 - No URL found for en-latest-building-applications-safety-html.html, skipping
+2025-04-19 13:25:56,667 - No URL found for en-latest-distributions-self-hosted-distro-ollama-html.html, skipping
+2025-04-19 13:25:56,667 - No URL found for en-latest-distributions-ondevice-distro-ios-sdk-html.html, skipping
+2025-04-19 13:25:56,667 - No URL found for en-latest-sources-providers-external-md-txt.html, skipping
+2025-04-19 13:25:56,667 - No URL found for en-latest-concepts-index-html.html, skipping
+2025-04-19 13:25:56,667 - No URL found for en-latest-distributions-self-hosted-distro-together-html.html, skipping
+2025-04-19 13:25:56,667 - No URL found for en-latest-sources-references-index-md-txt.html, skipping
+2025-04-19 13:25:56,667 - No URL found for en-latest-concepts-evaluation-concepts-html.html, skipping
+2025-04-19 13:25:56,667 - No URL found for en-latest-sources-distributions-self-hosted-distro-together-md-txt.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-references-api-reference-index-html.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-providers-vector-io-pgvector-html.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-sources-contributing-new-api-provider-md-txt.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-sources-building-applications-evals-md-txt.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-sources-distributions-self-hosted-distro-remote-vllm-md-txt.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-building-applications-tools-html.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-distributions-self-hosted-distro-remote-vllm-html.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-sources-distributions-self-hosted-distro-nvidia-md-txt.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-sources-distributions-building-distro-md-txt.html, skipping
+2025-04-19 13:25:56,668 - No URL found for en-latest-playground-index-html.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-building-applications-agent-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-references-llama-stack-client-cli-reference-html.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-distributions-index-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-distributions-self-hosted-distro-tgi-html.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-distributions-self-hosted-distro-fireworks-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-distributions-self-hosted-distro-ollama-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-distributions-list-of-distributions-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-concepts-evaluation-concepts-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-providers-vector-io-faiss-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-index-html.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-building-applications-agent-html.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-references-llama-stack-client-cli-reference-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-providers-vector-io-sqlite-vec-html.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-distributions-kubernetes-deployment-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-distributions-self-hosted-distro-meta-reference-gpu-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-providers-vector-io-chromadb-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-distributions-configuration-html.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-references-python-sdk-reference-index-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-building-applications-telemetry-html.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-building-applications-index-md-txt.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-building-applications-index-html.html, skipping
+2025-04-19 13:25:56,669 - No URL found for en-latest-sources-building-applications-telemetry-md-txt.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-introduction-index-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-distributions-list-of-distributions-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-providers-vector-io-faiss-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-distributions-self-hosted-distro-nvidia-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-sources-getting-started-index-md-txt.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-sources-index-md-txt.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-contributing-index-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-providers-vector-io-weaviate-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-getting-started-detailed-tutorial-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-sources-distributions-remote-hosted-distro-index-md-txt.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-sources-references-llama-cli-reference-index-md-txt.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-references-index-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-sources-distributions-ondevice-distro-android-sdk-md-txt.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-distributions-kubernetes-deployment-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-sources-introduction-index-md-txt.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-sources-providers-index-md-txt.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-providers-vector-io-chromadb-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-sources-references-llama-cli-reference-download-models-md-txt.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-distributions-index-html.html, skipping
+2025-04-19 13:25:56,670 - No URL found for en-latest-providers-vector-io-qdrant-html.html, skipping
+2025-04-19 13:27:05,875 - No URLs mapping found, using filenames
+2025-04-19 13:27:05,876 - No URL found for en-latest-sources-building-applications-safety-md-txt.html, skipping
+2025-04-19 13:27:05,876 - No URL found for en-latest-references-python-sdk-reference-index-html.html, skipping
+2025-04-19 13:27:05,876 - No URL found for en-latest-sources-getting-started-detailed-tutorial-md-txt.html, skipping
+2025-04-19 13:27:05,876 - No URL found for en-latest-getting-started-index-html.html, skipping
+2025-04-19 13:27:05,876 - No URL found for en-latest-sources-contributing-index-md-txt.html, skipping
+2025-04-19 13:27:05,876 - No URL found for en-latest-sources-distributions-self-hosted-distro-tgi-md-txt.html, skipping
+2025-04-19 13:27:05,876 - No URL found for en-latest-distributions-remote-hosted-distro-index-html.html, skipping
+2025-04-19 13:27:05,877 - No URL found for en-latest-sources-distributions-ondevice-distro-ios-sdk-md-txt.html, skipping
+2025-04-19 13:27:05,877 - No URL found for en-latest-providers-index-html.html, skipping
+2025-04-19 13:27:05,877 - No URL found for en-latest-distributions-self-hosted-distro-meta-reference-gpu-html.html, skipping
+2025-04-19 13:27:05,877 - No URL found for en-latest-distributions-self-hosted-distro-fireworks-html.html, skipping
+2025-04-19 13:27:05,877 - No URL found for en-latest-references-evals-reference-index-html.html, skipping
+2025-04-19 13:27:05,877 - No URL found for en-latest-sources-providers-vector-io-pgvector-md-txt.html, skipping
+2025-04-19 13:27:05,877 - No URL found for en-latest-distributions-ondevice-distro-android-sdk-html.html, skipping
+2025-04-19 13:27:05,878 - No URL found for en-latest-contributing-new-api-provider-html.html, skipping
+2025-04-19 13:27:05,878 - No URL found for en-latest-sources-references-evals-reference-index-md-txt.html, skipping
+2025-04-19 13:27:05,878 - No URL found for en-latest-sources-concepts-index-md-txt.html, skipping
+2025-04-19 13:27:05,878 - No URL found for en-latest-sources-building-applications-rag-md-txt.html, skipping
+2025-04-19 13:27:05,878 - No URL found for en-latest-sources-distributions-configuration-md-txt.html, skipping
+2025-04-19 13:27:05,878 - No URL found for en-latest-sources-playground-index-md-txt.html, skipping
+2025-04-19 13:27:05,878 - No URL found for en-latest-distributions-importing-as-library-html.html, skipping
+2025-04-19 13:27:05,878 - No URL found for en-latest-sources-building-applications-agent-execution-loop-md-txt.html, skipping
+2025-04-19 13:27:05,879 - No URL found for en-latest-building-applications-agent-execution-loop-html.html, skipping
+2025-04-19 13:27:05,879 - No URL found for en-latest-sources-providers-vector-io-qdrant-md-txt.html, skipping
+2025-04-19 13:27:05,879 - No URL found for en-latest-references-llama-cli-reference-download-models-html.html, skipping
+2025-04-19 13:27:05,879 - No URL found for en-latest-building-applications-rag-html.html, skipping
+2025-04-19 13:27:05,879 - No URL found for en-latest-sources-building-applications-tools-md-txt.html, skipping
+2025-04-19 13:27:05,879 - No URL found for en-latest-distributions-building-distro-html.html, skipping
+2025-04-19 13:27:05,879 - No URL found for en-latest-sources-distributions-importing-as-library-md-txt.html, skipping
+2025-04-19 13:27:05,879 - No URL found for en-latest-sources-providers-vector-io-weaviate-md-txt.html, skipping
+2025-04-19 13:27:05,879 - No URL found for en-latest-building-applications-evals-html.html, skipping
+2025-04-19 13:27:05,880 - No URL found for en-latest-sources-providers-vector-io-sqlite-vec-md-txt.html, skipping
+2025-04-19 13:27:05,880 - No URL found for en-latest-references-llama-cli-reference-index-html.html, skipping
+2025-04-19 13:27:05,880 - No URL found for en-latest-providers-external-html.html, skipping
+2025-04-19 13:27:05,880 - No URL found for en-latest-sources-references-api-reference-index-md-txt.html, skipping
+2025-04-19 13:27:05,880 - No URL found for en-latest-building-applications-safety-html.html, skipping
+2025-04-19 13:27:05,880 - No URL found for en-latest-distributions-self-hosted-distro-ollama-html.html, skipping
+2025-04-19 13:27:05,880 - No URL found for en-latest-distributions-ondevice-distro-ios-sdk-html.html, skipping
+2025-04-19 13:27:05,880 - No URL found for en-latest-sources-providers-external-md-txt.html, skipping
+2025-04-19 13:27:05,881 - No URL found for en-latest-concepts-index-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-distributions-self-hosted-distro-together-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-references-index-md-txt.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-concepts-evaluation-concepts-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-distributions-self-hosted-distro-together-md-txt.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-references-api-reference-index-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-providers-vector-io-pgvector-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-contributing-new-api-provider-md-txt.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-building-applications-evals-md-txt.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-distributions-self-hosted-distro-remote-vllm-md-txt.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-building-applications-tools-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-distributions-self-hosted-distro-remote-vllm-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-distributions-self-hosted-distro-nvidia-md-txt.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-distributions-building-distro-md-txt.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-playground-index-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-building-applications-agent-md-txt.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-references-llama-stack-client-cli-reference-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-distributions-index-md-txt.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-distributions-self-hosted-distro-tgi-html.html, skipping
+2025-04-19 13:27:05,882 - No URL found for en-latest-sources-distributions-self-hosted-distro-fireworks-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-distributions-self-hosted-distro-ollama-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-distributions-list-of-distributions-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-concepts-evaluation-concepts-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-providers-vector-io-faiss-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-index-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-building-applications-agent-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-references-llama-stack-client-cli-reference-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-providers-vector-io-sqlite-vec-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-distributions-kubernetes-deployment-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-distributions-self-hosted-distro-meta-reference-gpu-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-providers-vector-io-chromadb-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-distributions-configuration-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-references-python-sdk-reference-index-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-building-applications-telemetry-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-building-applications-index-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-building-applications-index-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-building-applications-telemetry-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-introduction-index-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-distributions-list-of-distributions-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-providers-vector-io-faiss-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-distributions-self-hosted-distro-nvidia-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-getting-started-index-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-index-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-contributing-index-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-providers-vector-io-weaviate-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-getting-started-detailed-tutorial-html.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-distributions-remote-hosted-distro-index-md-txt.html, skipping
+2025-04-19 13:27:05,883 - No URL found for en-latest-sources-references-llama-cli-reference-index-md-txt.html, skipping
+2025-04-19 13:27:05,884 - No URL found for en-latest-references-index-html.html, skipping
+2025-04-19 13:27:05,884 - No URL found for en-latest-sources-distributions-ondevice-distro-android-sdk-md-txt.html, skipping
+2025-04-19 13:27:05,884 - No URL found for en-latest-distributions-kubernetes-deployment-html.html, skipping
+2025-04-19 13:27:05,884 - No URL found for en-latest-sources-introduction-index-md-txt.html, skipping
+2025-04-19 13:27:05,884 - No URL found for en-latest-sources-providers-index-md-txt.html, skipping
+2025-04-19 13:27:05,885 - No URL found for en-latest-providers-vector-io-chromadb-html.html, skipping
+2025-04-19 13:27:05,885 - No URL found for en-latest-sources-references-llama-cli-reference-download-models-md-txt.html, skipping
+2025-04-19 13:27:05,885 - No URL found for en-latest-distributions-index-html.html, skipping
+2025-04-19 13:27:05,885 - No URL found for en-latest-providers-vector-io-qdrant-html.html, skipping

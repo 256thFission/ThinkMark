@@ -1,0 +1,12 @@
+{
+  "start_url": "https://llama-stack.readthedocs.io/",
+  "allowed_domains": ["llama-stack.readthedocs.io"],
+  "include_paths": ["/"],
+  "exclude_paths": ["/blog", "/changelog"],
+  "remove_selectors": ["nav", ".sidebar", ".footer", "header"],
+  "max_depth": 4,
+  "chunk": {
+    "max_tokens": 2048,
+    "overlap": 128
+  }
+}

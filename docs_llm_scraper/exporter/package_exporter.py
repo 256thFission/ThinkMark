@@ -12,6 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
+from slugify import slugify
 
 logger = logging.getLogger(__name__)
 
@@ -55,25 +56,43 @@ class PackageExporter:
         parsed_url = urlparse(start_url)
         site_name = parsed_url.netloc
         
+        exported_count = 0
+        missing_path_count = 0
+        
         # Write pages
         for url, content in pages.items():
             # Get page path from hierarchy if available
             page_path = self._get_page_path(url, hierarchy)
             
             if not page_path:
-                # Skip pages not in hierarchy
-                logger.warning(f"Skipping page not in hierarchy: {url}")
+                # Skip pages we really can't generate a path for
+                logger.warning(f"Skipping page - cannot generate path: {url}")
+                missing_path_count += 1
                 continue
-                
+            
+            # Normalize path to avoid duplicate "pages/"
+            if page_path.startswith("pages/"):
+                relative_path = page_path
+            else:
+                relative_path = f"pages/{page_path}"
+            
             # Create subdirectories if needed
-            full_path = self.pages_dir / page_path
-            os.makedirs(full_path.parent, exist_ok=True)
+            full_path = self.output_dir / relative_path
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            
+            # Debug
+            logger.debug(f"Exporting page to: {full_path} (from {url})")
                 
             # Write page content
-            with open(full_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-                
-            logger.debug(f"Exported page: {full_path}")
+            try:
+                with open(full_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                exported_count += 1
+                logger.debug(f"Exported page: {full_path}")
+            except Exception as e:
+                logger.error(f"Error exporting page {url} to {full_path}: {str(e)}")
+        
+        logger.info(f"Exported {exported_count} pages with {missing_path_count} skipped")
         
         # Generate manifest.json
         manifest = {
@@ -110,6 +129,20 @@ class PackageExporter:
             path = self._get_page_path(url, child)
             if path:
                 return path
+        
+        # If not found in hierarchy, generate a path based on URL
+        # This is a fallback to ensure we always export pages even if they're not in the hierarchy
+        if url:
+            parsed = urlparse(url)
+            path = parsed.path.strip('/')
+            
+            # Handle empty path or just domain
+            if not path:
+                return "pages/index.md"
+                
+            # Convert path to filename-safe format
+            path_slug = slugify(path)
+            return f"pages/{path_slug}.md"
                 
         return None
     

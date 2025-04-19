@@ -197,22 +197,50 @@ class HTMLCleaner:
         Args:
             markdown: Raw Markdown string
             url: Source URL for reference
-            
         Returns:
             str: Cleaned Markdown
         """
+        # Minimal regex patch for MVP image/comment removal and unescaping
+        patterns = [
+            (r'^<!--.*?-->\s*', ''),           # drop leading HTML comments
+            (r'!\[[^\]]*\]\([^)]*\)', ''), # remove Markdown images
+            (r'\\_', '_'),                    # unescape underscores
+            (r'\\\*', '*'),                  # unescape bold/italic markers
+        ]
+        for pat, repl in patterns:
+            markdown = re.sub(pat, repl, markdown, flags=re.MULTILINE)
+
+        # Minimal fence-balance check: auto-close if odd number of code fences
+        if markdown.count('```') % 2:
+            markdown += '\n```'
+
+        # Pre-clean the entire markdown to fix structural issues
+        # 1. Remove anchor link icons [](#headings) that appear after headings
+        markdown = re.sub(r'\[.*?\]\(#.*?\s+"Link to this heading"\)', '', markdown)
+        
+        # 2. Remove Read-the-Docs copy buttons and prompts
+        markdown = re.sub(r'▽', '', markdown)  # Remove triangle symbols
+        markdown = re.sub(r'>>>\s*$', '', markdown, flags=re.MULTILINE)  # Remove isolated >>> prompts
+        
+        # (Fence-balance now handled above with count/auto-close)
+        # Process line by line
         lines = markdown.splitlines()
         cleaned_lines = []
+        in_code_block = False
         
         # Process lines
         for line in lines:
+            # Track code blocks to avoid modifying code content
+            if line.strip().startswith('```'):
+                in_code_block = not in_code_block
+            
             # Skip empty lines
             if not line.strip():
                 cleaned_lines.append('')
                 continue
             
-            # Deduplicate paragraphs
-            if not line.startswith(('#', '>', '```', '    ', '-', '*', '|')):
+            # Only deduplicate non-code content
+            if not in_code_block and not line.startswith(('#', '>', '```', '    ', '-', '*', '|')):
                 # This is a regular paragraph, check for duplication
                 line_hash = hashlib.sha256(line.encode('utf-8')).hexdigest()
                 

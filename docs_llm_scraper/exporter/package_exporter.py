@@ -7,9 +7,9 @@ import json
 import logging
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from urllib.parse import urlparse
 from slugify import slugify
 
@@ -52,15 +52,49 @@ class PackageExporter:
         """
         # Get domain name for site name
         start_url = self.config.get('start_url', '')
+        # Convert to string in case it's a typer.Argument object
+        if not isinstance(start_url, str):
+            start_url = str(start_url)
         parsed_url = urlparse(start_url)
         site_name = parsed_url.netloc
         
         exported_count = 0
         missing_path_count = 0
         
-        # Write pages
+        # First pass: Identify duplicate content and normalize file paths
+        url_to_normalized_path = {}
+        normalized_paths = {}
+        duplicate_urls = set()
+        
+        # Identify all HTML pages that have matching source files
+        html_urls = [url for url in pages.keys() if "_sources_" not in url]
+        source_urls = [url for url in pages.keys() if "_sources_" in url]
+        
+        # Create normalized slugs for matching
+        html_normalized = {}
+        for url in html_urls:
+            norm_url = url.replace(".html", "")
+            if norm_url.endswith('/'):
+                norm_url = norm_url[:-1]
+            html_normalized[norm_url] = url
+        
+        # Mark all source files with matching HTML pages as duplicates
+        for url in source_urls:
+            # Convert source URL to its HTML equivalent for matching
+            source_path = url.replace("_sources/", "").replace(".md.txt", "")
+            
+            # If there's a matching HTML page, mark this source as duplicate
+            if source_path in html_normalized:
+                duplicate_urls.add(url)
+                logger.debug(f"Source file has HTML equivalent: {url} -> {html_normalized[source_path]}")
+        
+        # For remaining pages, group URLs by content similarity to find duplicates
         for url, content in pages.items():
-            # Get page path from hierarchy if available
+            # Skip already identified duplicates
+            if url in duplicate_urls:
+                continue
+                
+            # Get original page path from hierarchy
             page_path = self._get_page_path(url, hierarchy)
             
             if not page_path:
@@ -75,8 +109,64 @@ class PackageExporter:
             else:
                 relative_path = f"pages/{page_path}"
             
+            # Create normalized path name:
+            # - Remove -html suffix
+            # - Remove -md-txt suffix
+            # - Remove _sources_ from path
+            normalized_path = relative_path
+            normalized_path = normalized_path.replace("-html", "")
+            normalized_path = normalized_path.replace("-md-txt", "")
+            normalized_path = normalized_path.replace("_sources_", "_")
+            
+            # If this normalized path already exists, check if we have a duplicate
+            if normalized_path in normalized_paths:
+                existing_url = normalized_paths[normalized_path]
+                # We don't need to check content equality - just use URL patterns
+                
+                # Check if this is a duplicate by preferring non-source versions
+                if "_sources_" in url:
+                    # If this is a source version, mark it as duplicate
+                    duplicate_urls.add(url)
+                elif "_sources_" in existing_url:
+                    # If the existing one is a source version, replace it
+                    duplicate_urls.add(existing_url)
+                    normalized_paths[normalized_path] = url
+                    url_to_normalized_path[url] = normalized_path
+                else:
+                    # If neither is a source version, mark this as duplicate
+                    # (prefer the one already in the map)
+                    duplicate_urls.add(url)
+            else:
+                # First time seeing this normalized path
+                normalized_paths[normalized_path] = url
+                url_to_normalized_path[url] = normalized_path
+        
+        # Second pass: Write non-duplicate pages with normalized paths
+        for url, content in pages.items():
+            # Skip duplicates
+            if url in duplicate_urls:
+                logger.debug(f"Skipping duplicate page: {url}")
+                continue
+            
+            # Get page path from hierarchy if not already calculated
+            if url not in url_to_normalized_path:
+                page_path = self._get_page_path(url, hierarchy)
+                if not page_path:
+                    continue
+                
+                # Normalize path to avoid duplicate "pages/"
+                if page_path.startswith("pages/"):
+                    normalized_path = page_path
+                else:
+                    normalized_path = f"pages/{page_path}"
+                
+                url_to_normalized_path[url] = normalized_path
+                
+            # Get the normalized path
+            normalized_path = url_to_normalized_path[url]
+            
             # Create subdirectories if needed
-            full_path = self.output_dir / relative_path
+            full_path = self.output_dir / normalized_path
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             
             # Debug
@@ -91,22 +181,27 @@ class PackageExporter:
             except Exception as e:
                 logger.error(f"Error exporting page {url} to {full_path}: {str(e)}")
         
-        logger.info(f"Exported {exported_count} pages with {missing_path_count} skipped")
+        logger.info(f"Exported {exported_count} pages with {missing_path_count} skipped and {len(duplicate_urls)} duplicates removed")
         
         # Generate manifest.json
         manifest = {
             "site": site_name,
-            "generated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "generated": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "tree": hierarchy
         }
         
         with open(self.output_dir / "manifest.json", 'w', encoding='utf-8') as f:
             json.dump(manifest, f, indent=2, ensure_ascii=False)
             
-        logger.info(f"Generated manifest.json with {len(pages)} pages")
+        logger.info(f"Generated manifest.json with {len(pages) - len(duplicate_urls)} unique pages")
         
-        # Generate llms.txt
-        self._generate_llms_txt(pages.keys())
+        # Generate llms.txt - aggressively filter out duplicate and source URLs
+        filtered_urls = self.filter_urls_for_llms_txt(pages.keys())
+        # Make sure all source URLs are marked as duplicates for exclusion
+        for url in pages.keys():
+            if "_sources_" in url:
+                duplicate_urls.add(url)
+        self._generate_llms_txt(filtered_urls, duplicate_urls)
     
     def _get_page_path(self, url: str, hierarchy: Dict) -> Optional[str]:
         """
@@ -141,82 +236,183 @@ class PackageExporter:
                 
             # Convert path to filename-safe format
             path_slug = slugify(path)
-            return f"pages/{path_slug}.md"
-                
-        # In the original implementation, we return None here, but the tests expect a fallback
-        # behavior for non-existent pages. 
-        # For backward compatibility with existing tests, return the fallback path
-        if url:
-            parsed = urlparse(url)
-            path = parsed.path.strip('/')
-            path_slug = slugify(path)
+            
+            # Generate a cleaner, normalized path slug
+            # - Remove html suffix
+            # - Remove md.txt suffix from source files 
+            # - Handle index pages appropriately
+            if path.endswith('/') or path.endswith('/index.html'):
+                parts = path.strip('/').split('/')
+                if parts:
+                    dir_path = slugify('/'.join(parts))
+                    return f"pages/{dir_path}/index.md"
+                else:
+                    return "pages/index.md"
+            
             return f"pages/{path_slug}.md"
             
         return None
     
-    def _generate_llms_txt(self, urls: List[str]) -> None:
+    def _generate_llms_txt(self, urls: List[str], duplicates: Set[str] = None) -> None:
         """
         Generate llms.txt file mapping canonical slugs to local markdown files.
         
         Uses improved format with section headers and slug-first mapping.
+        Normalizes slugs, eliminates duplicates, and adds depth indicators.
         
         Args:
             urls: List of crawled URLs
+            duplicates: Set of URLs to exclude as duplicates
         """
         # Get domain name
         start_url = self.config.get('start_url', '')
+        # Convert to string in case it's a typer.Argument object
+        if not isinstance(start_url, str):
+            start_url = str(start_url)
         parsed_url = urlparse(start_url)
         site_name = parsed_url.netloc
         
-        # Create mapping of slug to page path
+        # Ensure we have a set for duplicates
+        if duplicates is None:
+            duplicates = set()
+            
+        # Aggressively filter out all source URLs - these are never meant to be in llms.txt
+        # We will track these as duplicates so they're filtered at all stages
+        for url in list(urls):
+            if "_sources_" in url:
+                duplicates.add(url)
+                
+        # Create a filtered URL list excluding duplicates and source URLs
+        filtered_urls = [url for url in urls if url not in duplicates and "_sources_" not in url]
+        logger.info(f"Strictly filtered {len(urls) - len(filtered_urls)} URLs from llms.txt (sources and duplicates)")
+        urls = filtered_urls
+        
+        # Create mapping of normalized slug to page path
         url_to_slug_map = {}
         url_to_section_map = {}
+        url_to_depth_map = {}
+        normalized_slug_to_actual_path = {}
         
+        # First pass - collect info about each URL
         for url in urls:
             parsed = urlparse(url)
             path = parsed.path.strip('/')
             
-            # Generate slug from URL path
+            # Calculate path depth for indentation
+            path_parts = path.split('/')
+            depth = len(path_parts) - 1 if path_parts else 0
+            url_to_depth_map[url] = depth
+            
+            # Generate normalized slug from URL path
             if not path:
                 # Root path
-                slug = "index"
+                normalized_slug = "index"
                 section = "/"
             else:
                 # Extract section (first path component)
-                path_parts = path.split('/')
                 section = f"/{path_parts[0]}" if path_parts else "/"
                 
                 # If nested, include parent directories in section
                 if len(path_parts) > 1:
                     section = "/".join([""] + path_parts[:-1])
                 
-                # Generate slug from path
-                slug = slugify(path.replace('/', '_'))
+                # Generate normalized slug from path - remove html/txt suffixes
+                base_slug = slugify(path.replace('/', '_'))
                 
-                # Handle index pages - use directory name as identifier
+                # Normalize by removing common suffixes
+                normalized_slug = base_slug
+                normalized_slug = normalized_slug.replace("-html", "")
+                normalized_slug = normalized_slug.replace("-md-txt", "")
+                
+                # Handle index pages
                 if path.endswith('/') or path.endswith('/index.html'):
                     parts = path.strip('/').split('/')
                     if parts:
-                        slug = f"{slugify('_'.join(parts))}/index"
+                        normalized_slug = f"{slugify('_'.join(parts))}_index"
                     else:
-                        slug = "index"
+                        normalized_slug = "index"
+                        
+                # Complete slug cleanup
+                normalized_slug = normalized_slug.replace("_sources_", "_")
+                normalized_slug = normalized_slug.replace("_html_index", "_index")
+                normalized_slug = normalized_slug.replace("_index_html", "_index")
             
-            # Get page path 
+            # Get page path
             page_path = self._get_page_path(url, {})
             if page_path and not page_path.startswith("pages/"):
                 page_path = f"pages/{page_path}"
                 
             if page_path:
-                url_to_slug_map[url] = (slug, page_path)
+                # We don't need to create a normalized path 
+                # Since we just store the original path and normalized_slug separately
+                
+                # Store with normalized slug
+                url_to_slug_map[url] = (normalized_slug, page_path)
                 url_to_section_map[url] = section
+                
+                # Keep track of the actual normalized path for each slug
+                if normalized_slug not in normalized_slug_to_actual_path or "_sources_" not in url:
+                    normalized_slug_to_actual_path[normalized_slug] = page_path
+        
+        # Find and remove duplicates - completely filtered out all source files
+        duplicates = set()
+        
+        # First eliminate all source versions
+        for url in url_to_slug_map.keys():
+            # If it's a source version, mark it as a duplicate
+            if "_sources_" in url:
+                slug, _ = url_to_slug_map[url]
+                # Only mark as duplicate if we have a non-source version
+                html_exists = any(u for u in url_to_slug_map if 
+                                 url_to_slug_map[u][0] == slug and "_sources_" not in u)
+                if html_exists:
+                    duplicates.add(url)
+                    logger.debug(f"Marked source file as duplicate: {url}")
+        
+        # Now check for any remaining duplicates by normalized slug
+        slug_to_urls = {}
+        for url, (normalized_slug, _) in url_to_slug_map.items():
+            if url in duplicates:
+                continue  # Skip already marked duplicates
+                
+            if normalized_slug not in slug_to_urls:
+                slug_to_urls[normalized_slug] = []
+            slug_to_urls[normalized_slug].append(url)
+        
+        # Mark additional duplicates if needed
+        for normalized_slug, slug_urls in slug_to_urls.items():
+            if len(slug_urls) > 1:
+                # Sort URLs to get a deterministic order
+                sorted_urls = sorted(slug_urls, key=lambda u: u)
+                
+                # Keep the first one, mark others as duplicates
+                for dup_url in sorted_urls[1:]:
+                    duplicates.add(dup_url)
+                    logger.debug(f"Marked as duplicate: {dup_url} (same as {sorted_urls[0]})")
         
         # Group by sections
         sections = {}
-        for url, (slug, page_path) in url_to_slug_map.items():
+        for url, (normalized_slug, page_path) in url_to_slug_map.items():
+            # Skip duplicates - from internal detection or from parameter
+            if url in duplicates:
+                logger.debug(f"Skipping duplicate URL in section grouping: {url}")
+                continue
+                
+            # Double check to ensure no source files make it to the output
+            if "_sources_" in url:
+                logger.debug(f"Skipping source URL in section grouping: {url}")
+                continue
+                
             section = url_to_section_map[url]
             if section not in sections:
                 sections[section] = []
-            sections[section].append((slug, page_path))
+            
+            # Use the normalized path for display
+            display_path = normalized_slug_to_actual_path.get(normalized_slug, page_path)
+            
+            # Add depth indicator to slug (will be used for indentation)
+            depth = url_to_depth_map[url]
+            sections[section].append((normalized_slug, display_path, depth))
         
         # Sort sections and entries within sections
         sorted_sections = sorted(sections.keys())
@@ -229,17 +425,53 @@ class PackageExporter:
             for section in sorted_sections:
                 f.write(f"## {section}\n")
                 
-                # Sort entries within section and format with alignment
+                # Sort entries within section by slug
                 entries = sorted(sections[section], key=lambda x: x[0])
-                slug_width = max(len(slug) for slug, _ in entries) if entries else 0
+                slug_width = max(len(slug) for slug, _, _ in entries) if entries else 0
                 
-                for slug, page_path in entries:
+                for slug, page_path, depth in entries:
+                    # Add depth indicator as indentation
+                    indent = "  " * depth
                     # Format with proper spacing for alignment
-                    f.write(f"{slug.ljust(slug_width)}  {page_path}\n")
+                    f.write(f"{indent}{slug.ljust(slug_width - depth*2)}  {page_path}\n")
                 
                 f.write("\n")
                 
-        logger.info(f"Generated improved llms.txt with {len(urls)} URLs in {len(sections)} sections")
+        # Count unique URLs after deduplication
+        unique_urls = len(urls) - len(duplicates)
+        logger.info(f"Generated improved llms.txt with {unique_urls} unique URLs (removed {len(duplicates)} duplicates) in {len(sections)} sections")
+    
+    def filter_urls_for_llms_txt(self, urls: List[str]) -> List[str]:
+        """
+        Filter out URLs that don't need to be in llms.txt.
+        
+        Filters out:
+        - _sources_ URLs since they duplicate the rendered HTML pages
+        - Any URLs containing source indicators
+        
+        Args:
+            urls: Original URL list
+            
+        Returns:
+            List[str]: Filtered URL list
+        """
+        # Aggressively filter out source URLs using multiple patterns
+        source_patterns = ["_sources_", "/_sources/", ".md.txt", "source", ".rst.txt"]
+        
+        filtered_urls = []
+        for url in urls:
+            # Skip any URL that looks like a source file
+            if any(pattern in url for pattern in source_patterns):
+                logger.debug(f"Filtering source URL from llms.txt: {url}")
+                continue
+            filtered_urls.append(url)
+        
+        # Debug count of removed URLs
+        removed_count = len(urls) - len(filtered_urls)
+        if removed_count > 0:
+            logger.info(f"Filtered out {removed_count} source URLs from llms.txt using aggressive patterns")
+            
+        return filtered_urls
     
     def copy_chunks(self, source_chunks_dir: str) -> None:
         """

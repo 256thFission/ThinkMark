@@ -1,5 +1,10 @@
 {
   "site": "llama-stack.readthedocs.io",
-  "generated": "2025-04-19T19:28:58Z",
-  "tree": {}
+  "generated": "2025-04-19T22:22:57Z",
+  "tree": {
+    "title": "Llama Stack — llama-stack  documentation",
+    "url": "https://llama-stack.readthedocs.io/en/latest/",
+    "page": "pages/en-latest.md",
+    "children": []
+  }
 }

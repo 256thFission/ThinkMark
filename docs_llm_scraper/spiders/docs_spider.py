@@ -69,6 +69,10 @@ class DocsSpider(scrapy.Spider):
         Returns:
             bool: True if URL should be followed, False otherwise
         """
+        # Make sure url is a string (not a typer.Argument object)
+        if not isinstance(url, str):
+            url = str(url)
+            
         # Parse URL to get path
         parsed_url = urlparse(url)
         path = parsed_url.path
@@ -185,6 +189,10 @@ class DocsSpider(scrapy.Spider):
         Returns:
             str: Slug for the URL
         """
+        # Make sure url is a string (not a typer.Argument object)
+        if not isinstance(url, str):
+            url = str(url)
+            
         parsed = urlparse(url)
         path = parsed.path.rstrip('/')
         
@@ -205,6 +213,10 @@ class DocsSpider(scrapy.Spider):
         Returns:
             str: Title based on URL
         """
+        # Make sure url is a string (not a typer.Argument object)
+        if not isinstance(url, str):
+            url = str(url)
+            
         parsed = urlparse(url)
         path = parsed.path.rstrip('/')
         

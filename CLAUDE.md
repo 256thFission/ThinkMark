@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Remember that you are USING POETRY. DO NOT USE PIP.
+
 ## Build/Test/Lint Commands
 - Setup: `poetry install`
 - Run CLI tool: `poetry run docs-llm-scraper [OPTIONS] URL`

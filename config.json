@@ -1,12 +1,12 @@
 {
-  "start_url": "https://llama-stack.readthedocs.io/en/latest/",
-  "allowed_domains": ["llama-stack.readthedocs.io"],
-  "include_paths": ["/en/latest/"],
-  "exclude_paths": [],
-  "remove_selectors": [".rst-versions", ".wy-nav-side", ".wy-nav-content-wrap header", ".wy-nav-content-wrap footer"],
-  "max_depth": 2,
+  "start_url": "file:///home/dev/ThinkMark/tests/fixtures/site/index.html",
+  "allowed_domains": ["localhost"],
+  "include_paths": ["/"],
+  "exclude_paths": ["/blog"],
+  "remove_selectors": ["nav", ".sidebar", ".footer"],
+  "max_depth": 3,
   "chunk": {
-    "max_tokens": 2048,
-    "overlap": 128
+    "max_tokens": 1024,
+    "overlap": 64
   }
 }

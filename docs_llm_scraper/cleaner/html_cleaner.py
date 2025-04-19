@@ -284,6 +284,10 @@ class HTMLCleaner:
             return url
             
         try:
+            # Make sure url is a string (not a typer.Argument object)
+            if not isinstance(url, str):
+                url = str(url)
+                
             # Parse URL
             parsed = urlparse(url)
             

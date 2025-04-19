@@ -1,3 +1,6 @@
 docs-llm-pkg/
 docs_llm_scraper/logs/bad_urls.txt
 docs_llm_scraper/exporter/__pycache__/package_exporter.cpython-312.pyc
+docs_llm_scraper/cleaner/__pycache__/html_cleaner.cpython-312.pyc
+docs_llm_scraper/exporter/__pycache__/package_exporter.cpython-312.pyc
+docs_llm_scraper/logs/bad_urls.txt

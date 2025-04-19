@@ -1,2 +1,158 @@
-# llama-stack.readthedocs.io llms.txt (v0.2)
-https://llama-stack.readthedocs.io/en/latest/
+# llama-stack.readthedocs.io llms.txt (v0.3)
+# chunks-manifest: chunks/index.json
+
+## /en
+en-latest  pages/en-latest.md
+
+## /en/latest
+en-latest-index-html/index  pages/en-latest-index-html.md
+
+## /en/latest/_sources
+en-latest-sources-index-md-txt  pages/en-latest-sources-index-md-txt.md
+
+## /en/latest/_sources/building_applications
+en-latest-sources-building-applications-agent-execution-loop-md-txt  pages/en-latest-sources-building-applications-agent-execution-loop-md-txt.md
+en-latest-sources-building-applications-agent-md-txt                 pages/en-latest-sources-building-applications-agent-md-txt.md
+en-latest-sources-building-applications-evals-md-txt                 pages/en-latest-sources-building-applications-evals-md-txt.md
+en-latest-sources-building-applications-index-md-txt                 pages/en-latest-sources-building-applications-index-md-txt.md
+en-latest-sources-building-applications-rag-md-txt                   pages/en-latest-sources-building-applications-rag-md-txt.md
+en-latest-sources-building-applications-safety-md-txt                pages/en-latest-sources-building-applications-safety-md-txt.md
+en-latest-sources-building-applications-telemetry-md-txt             pages/en-latest-sources-building-applications-telemetry-md-txt.md
+en-latest-sources-building-applications-tools-md-txt                 pages/en-latest-sources-building-applications-tools-md-txt.md
+
+## /en/latest/_sources/concepts
+en-latest-sources-concepts-evaluation-concepts-md-txt  pages/en-latest-sources-concepts-evaluation-concepts-md-txt.md
+en-latest-sources-concepts-index-md-txt                pages/en-latest-sources-concepts-index-md-txt.md
+
+## /en/latest/_sources/contributing
+en-latest-sources-contributing-index-md-txt             pages/en-latest-sources-contributing-index-md-txt.md
+en-latest-sources-contributing-new-api-provider-md-txt  pages/en-latest-sources-contributing-new-api-provider-md-txt.md
+
+## /en/latest/_sources/distributions
+en-latest-sources-distributions-building-distro-md-txt        pages/en-latest-sources-distributions-building-distro-md-txt.md
+en-latest-sources-distributions-configuration-md-txt          pages/en-latest-sources-distributions-configuration-md-txt.md
+en-latest-sources-distributions-importing-as-library-md-txt   pages/en-latest-sources-distributions-importing-as-library-md-txt.md
+en-latest-sources-distributions-index-md-txt                  pages/en-latest-sources-distributions-index-md-txt.md
+en-latest-sources-distributions-kubernetes-deployment-md-txt  pages/en-latest-sources-distributions-kubernetes-deployment-md-txt.md
+en-latest-sources-distributions-list-of-distributions-md-txt  pages/en-latest-sources-distributions-list-of-distributions-md-txt.md
+
+## /en/latest/_sources/getting_started
+en-latest-sources-getting-started-detailed-tutorial-md-txt  pages/en-latest-sources-getting-started-detailed-tutorial-md-txt.md
+en-latest-sources-getting-started-index-md-txt              pages/en-latest-sources-getting-started-index-md-txt.md
+
+## /en/latest/_sources/introduction
+en-latest-sources-introduction-index-md-txt  pages/en-latest-sources-introduction-index-md-txt.md
+
+## /en/latest/_sources/playground
+en-latest-sources-playground-index-md-txt  pages/en-latest-sources-playground-index-md-txt.md
+
+## /en/latest/_sources/providers
+en-latest-sources-providers-external-md-txt  pages/en-latest-sources-providers-external-md-txt.md
+en-latest-sources-providers-index-md-txt     pages/en-latest-sources-providers-index-md-txt.md
+
+## /en/latest/_sources/providers/vector_io
+en-latest-sources-providers-vector-io-chromadb-md-txt    pages/en-latest-sources-providers-vector-io-chromadb-md-txt.md
+en-latest-sources-providers-vector-io-faiss-md-txt       pages/en-latest-sources-providers-vector-io-faiss-md-txt.md
+en-latest-sources-providers-vector-io-pgvector-md-txt    pages/en-latest-sources-providers-vector-io-pgvector-md-txt.md
+en-latest-sources-providers-vector-io-qdrant-md-txt      pages/en-latest-sources-providers-vector-io-qdrant-md-txt.md
+en-latest-sources-providers-vector-io-sqlite-vec-md-txt  pages/en-latest-sources-providers-vector-io-sqlite-vec-md-txt.md
+en-latest-sources-providers-vector-io-weaviate-md-txt    pages/en-latest-sources-providers-vector-io-weaviate-md-txt.md
+
+## /en/latest/_sources/references
+en-latest-sources-references-index-md-txt                             pages/en-latest-sources-references-index-md-txt.md
+en-latest-sources-references-llama-stack-client-cli-reference-md-txt  pages/en-latest-sources-references-llama-stack-client-cli-reference-md-txt.md
+
+## /en/latest/_sources/references/api_reference
+en-latest-sources-references-api-reference-index-md-txt  pages/en-latest-sources-references-api-reference-index-md-txt.md
+
+## /en/latest/_sources/references/evals_reference
+en-latest-sources-references-evals-reference-index-md-txt  pages/en-latest-sources-references-evals-reference-index-md-txt.md
+
+## /en/latest/_sources/references/llama_cli_reference
+en-latest-sources-references-llama-cli-reference-download-models-md-txt  pages/en-latest-sources-references-llama-cli-reference-download-models-md-txt.md
+en-latest-sources-references-llama-cli-reference-index-md-txt            pages/en-latest-sources-references-llama-cli-reference-index-md-txt.md
+
+## /en/latest/_sources/references/python_sdk_reference
+en-latest-sources-references-python-sdk-reference-index-md-txt  pages/en-latest-sources-references-python-sdk-reference-index-md-txt.md
+
+## /en/latest/building_applications
+en-latest-building-applications-agent-execution-loop-html  pages/en-latest-building-applications-agent-execution-loop-html.md
+en-latest-building-applications-agent-html                 pages/en-latest-building-applications-agent-html.md
+en-latest-building-applications-evals-html                 pages/en-latest-building-applications-evals-html.md
+en-latest-building-applications-index-html/index           pages/en-latest-building-applications-index-html.md
+en-latest-building-applications-rag-html                   pages/en-latest-building-applications-rag-html.md
+en-latest-building-applications-safety-html                pages/en-latest-building-applications-safety-html.md
+en-latest-building-applications-telemetry-html             pages/en-latest-building-applications-telemetry-html.md
+en-latest-building-applications-tools-html                 pages/en-latest-building-applications-tools-html.md
+
+## /en/latest/concepts
+en-latest-concepts-evaluation-concepts-html  pages/en-latest-concepts-evaluation-concepts-html.md
+en-latest-concepts-index-html/index          pages/en-latest-concepts-index-html.md
+
+## /en/latest/contributing
+en-latest-contributing-index-html/index       pages/en-latest-contributing-index-html.md
+en-latest-contributing-new-api-provider-html  pages/en-latest-contributing-new-api-provider-html.md
+
+## /en/latest/distributions
+en-latest-distributions-building-distro-html        pages/en-latest-distributions-building-distro-html.md
+en-latest-distributions-configuration-html          pages/en-latest-distributions-configuration-html.md
+en-latest-distributions-importing-as-library-html   pages/en-latest-distributions-importing-as-library-html.md
+en-latest-distributions-index-html/index            pages/en-latest-distributions-index-html.md
+en-latest-distributions-kubernetes-deployment-html  pages/en-latest-distributions-kubernetes-deployment-html.md
+en-latest-distributions-list-of-distributions-html  pages/en-latest-distributions-list-of-distributions-html.md
+
+## /en/latest/distributions/ondevice_distro
+en-latest-distributions-ondevice-distro-android-sdk-html  pages/en-latest-distributions-ondevice-distro-android-sdk-html.md
+en-latest-distributions-ondevice-distro-ios-sdk-html      pages/en-latest-distributions-ondevice-distro-ios-sdk-html.md
+
+## /en/latest/distributions/remote_hosted_distro
+en-latest-distributions-remote-hosted-distro-index-html/index  pages/en-latest-distributions-remote-hosted-distro-index-html.md
+
+## /en/latest/distributions/self_hosted_distro
+en-latest-distributions-self-hosted-distro-fireworks-html           pages/en-latest-distributions-self-hosted-distro-fireworks-html.md
+en-latest-distributions-self-hosted-distro-meta-reference-gpu-html  pages/en-latest-distributions-self-hosted-distro-meta-reference-gpu-html.md
+en-latest-distributions-self-hosted-distro-nvidia-html              pages/en-latest-distributions-self-hosted-distro-nvidia-html.md
+en-latest-distributions-self-hosted-distro-ollama-html              pages/en-latest-distributions-self-hosted-distro-ollama-html.md
+en-latest-distributions-self-hosted-distro-remote-vllm-html         pages/en-latest-distributions-self-hosted-distro-remote-vllm-html.md
+en-latest-distributions-self-hosted-distro-tgi-html                 pages/en-latest-distributions-self-hosted-distro-tgi-html.md
+en-latest-distributions-self-hosted-distro-together-html            pages/en-latest-distributions-self-hosted-distro-together-html.md
+
+## /en/latest/getting_started
+en-latest-getting-started-detailed-tutorial-html  pages/en-latest-getting-started-detailed-tutorial-html.md
+en-latest-getting-started-index-html/index        pages/en-latest-getting-started-index-html.md
+
+## /en/latest/introduction
+en-latest-introduction-index-html/index  pages/en-latest-introduction-index-html.md
+
+## /en/latest/playground
+en-latest-playground-index-html/index  pages/en-latest-playground-index-html.md
+
+## /en/latest/providers
+en-latest-providers-external-html     pages/en-latest-providers-external-html.md
+en-latest-providers-index-html/index  pages/en-latest-providers-index-html.md
+
+## /en/latest/providers/vector_io
+en-latest-providers-vector-io-chromadb-html    pages/en-latest-providers-vector-io-chromadb-html.md
+en-latest-providers-vector-io-faiss-html       pages/en-latest-providers-vector-io-faiss-html.md
+en-latest-providers-vector-io-pgvector-html    pages/en-latest-providers-vector-io-pgvector-html.md
+en-latest-providers-vector-io-qdrant-html      pages/en-latest-providers-vector-io-qdrant-html.md
+en-latest-providers-vector-io-sqlite-vec-html  pages/en-latest-providers-vector-io-sqlite-vec-html.md
+en-latest-providers-vector-io-weaviate-html    pages/en-latest-providers-vector-io-weaviate-html.md
+
+## /en/latest/references
+en-latest-references-index-html/index                       pages/en-latest-references-index-html.md
+en-latest-references-llama-stack-client-cli-reference-html  pages/en-latest-references-llama-stack-client-cli-reference-html.md
+
+## /en/latest/references/api_reference
+en-latest-references-api-reference-index-html/index  pages/en-latest-references-api-reference-index-html.md
+
+## /en/latest/references/evals_reference
+en-latest-references-evals-reference-index-html/index  pages/en-latest-references-evals-reference-index-html.md
+
+## /en/latest/references/llama_cli_reference
+en-latest-references-llama-cli-reference-download-models-html  pages/en-latest-references-llama-cli-reference-download-models-html.md
+en-latest-references-llama-cli-reference-index-html/index      pages/en-latest-references-llama-cli-reference-index-html.md
+
+## /en/latest/references/python_sdk_reference
+en-latest-references-python-sdk-reference-index-html/index  pages/en-latest-references-python-sdk-reference-index-html.md
+

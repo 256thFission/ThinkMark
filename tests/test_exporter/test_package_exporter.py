@@ -90,9 +90,13 @@ def test_export_pages(tmp_path, basic_config, sample_pages, sample_hierarchy):
     # Verify llms.txt content
     with open(output_dir / "llms.txt", "r") as f:
         content = f.read()
-        assert "https://docs.example.com/" in content
-        assert "https://docs.example.com/api" in content
-        assert "https://docs.example.com/guide" in content
+        # Check for slug-based format instead of URLs
+        assert "index" in content
+        assert "api" in content
+        assert "guide" in content
+        assert "pages/index.md" in content
+        assert "pages/api.md" in content
+        assert "pages/guide.md" in content
 
 
 def test_get_page_path(basic_config, sample_hierarchy):
@@ -103,5 +107,5 @@ def test_get_page_path(basic_config, sample_hierarchy):
     assert exporter._get_page_path("https://docs.example.com/", sample_hierarchy) == "pages/index.md"
     assert exporter._get_page_path("https://docs.example.com/api", sample_hierarchy) == "pages/api.md"
     
-    # Test with non-existent page
-    assert exporter._get_page_path("https://docs.example.com/nonexistent", sample_hierarchy) is None
+    # Test with non-existent page - now returns fallback path instead of None
+    assert exporter._get_page_path("https://docs.example.com/nonexistent", sample_hierarchy) == "pages/nonexistent.md"

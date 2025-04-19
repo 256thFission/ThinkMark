@@ -69,8 +69,22 @@ class MarkdownChunker:
         chunks = []
         position = 0
         start_idx = 0
+        last_start_idx = -1  # Track previous start_idx to detect lack of progress
+        max_iterations = len(tokens) * 2  # Safety limit to prevent infinite loops
+        iterations = 0
         
-        while start_idx < len(tokens):
+        while start_idx < len(tokens) and iterations < max_iterations:
+            iterations += 1
+            
+            # Safety check: ensure we're making progress
+            if start_idx == last_start_idx:
+                logger.warning(f"Chunking stuck at position {start_idx} for {page_slug}. Forcing advance.")
+                start_idx += self.max_tokens // 2  # Force progress
+                if start_idx >= len(tokens):
+                    break
+            
+            last_start_idx = start_idx
+            
             # Calculate end index with overlap handling
             end_idx = min(start_idx + self.max_tokens, len(tokens))
             
@@ -101,12 +115,23 @@ class MarkdownChunker:
             chunks.append(chunk)
             
             # Move to next chunk with overlap
-            start_idx = end_idx - self.overlap
+            new_start_idx = end_idx - self.overlap
+            
+            # Ensure we're making forward progress even if split points aren't optimal
+            if new_start_idx <= start_idx:
+                # If no progress, move forward by at least 1/4 of max_tokens
+                new_start_idx = start_idx + (self.max_tokens // 4)
+                logger.warning(f"Adjusting chunk boundary for {page_slug} to ensure progress")
+                
+            start_idx = new_start_idx
             position += 1
             
             # Avoid tiny trailing chunks
             if len(tokens) - start_idx < self.max_tokens // 4:
                 break
+            
+        if iterations >= max_iterations:
+            logger.error(f"Reached maximum chunking iterations for {page_slug}. This may indicate a bug in the chunking algorithm.")
         
         # If we have a small remaining piece, add it to the last chunk
         if start_idx < len(tokens):
@@ -125,7 +150,7 @@ class MarkdownChunker:
             tokens: Token list for the text
             
         Returns:
-            Optional[int]: Token index for the split point, or None
+            Optional[int]: Token index for the split point, or fallback split point if none found
         """
         # Try to find a heading
         heading_matches = list(self.heading_pattern.finditer(text))
@@ -150,7 +175,14 @@ class MarkdownChunker:
                 if para_pos > 0 and para_pos < len(tokens):
                     return para_pos
         
-        # No good split point found
+        # Fallback: if no good split point found, return halfway point
+        # This ensures we always make progress even with difficult text
+        if len(tokens) > 10:  # Only if we have enough tokens to split
+            fallback_pos = len(tokens) // 2
+            logger.debug(f"No natural split point found, using fallback at position {fallback_pos}")
+            return fallback_pos
+            
+        # For very short segments, return None to use the entire segment
         return None
     
     def save_chunks(self, chunks: List[Dict], output_dir: str) -> None:

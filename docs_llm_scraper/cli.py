@@ -245,6 +245,28 @@ def process_html_files(
     return pages
 
 
+import signal
+import time
+from contextlib import contextmanager
+
+class TimeoutException(Exception):
+    pass
+
+@contextmanager
+def time_limit(seconds):
+    """Context manager for setting a timeout on a block of code."""
+    def signal_handler(signum, frame):
+        raise TimeoutException(f"Timed out after {seconds} seconds")
+    
+    # Set the signal handler
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        # Reset the alarm
+        signal.alarm(0)
+
 def process_chunks(
     md_dir: str, 
     chunks_dir: str, 
@@ -262,10 +284,14 @@ def process_chunks(
     
     # Process each Markdown file
     chunk_count = 0
-    for md_file in os.listdir(md_dir):
-        if not md_file.endswith('.md'):
-            continue
-            
+    processed_files = 0
+    problematic_files = []
+    
+    # Get sorted list of files to ensure deterministic processing order
+    md_files = sorted([f for f in os.listdir(md_dir) if f.endswith('.md')])
+    total_files = len(md_files)
+    
+    for md_file in md_files:
         file_path = os.path.join(md_dir, md_file)
         base_name = os.path.splitext(md_file)[0]
         
@@ -273,26 +299,44 @@ def process_chunks(
             # Read Markdown content
             with open(file_path, 'r', encoding='utf-8') as f:
                 markdown = f.read()
-                
-            # Chunk the content
-            chunks = chunker.chunk_markdown(markdown, base_name)
             
-            # Save chunks
-            for chunk in chunks:
-                chunk_id = chunk["id"]
-                chunk_path = os.path.join(chunks_dir, f"{chunk_id}.json")
-                
-                with open(chunk_path, 'w', encoding='utf-8') as f:
-                    json.dump(chunk, f, indent=2, ensure_ascii=False)
+            # Use timeout to prevent hanging on problematic files (60 seconds per file)
+            try:
+                with time_limit(60):
+                    # Chunk the content
+                    chunks = chunker.chunk_markdown(markdown, base_name)
                     
-                chunk_count += 1
-                
-            logger.debug(f"Chunked {md_file} into {len(chunks)} chunks")
+                    # Save chunks
+                    for chunk in chunks:
+                        chunk_id = chunk["id"]
+                        chunk_path = os.path.join(chunks_dir, f"{chunk_id}.json")
+                        
+                        with open(chunk_path, 'w', encoding='utf-8') as f:
+                            json.dump(chunk, f, indent=2, ensure_ascii=False)
+                            
+                        chunk_count += 1
+                    
+                    logger.debug(f"Chunked {md_file} into {len(chunks)} chunks")
+                    processed_files += 1
+                    
+                    # Log progress every 10 files
+                    if processed_files % 10 == 0 or processed_files == total_files:
+                        logger.info(f"Processed {processed_files}/{total_files} files ({processed_files/total_files:.1%})")
             
+            except TimeoutException:
+                logger.warning(f"Timed out while chunking {md_file} - skipping")
+                problematic_files.append(md_file)
+                
         except Exception as e:
             logger.error(f"Error chunking {md_file}: {str(e)}", exc_info=True)
+            problematic_files.append(md_file)
     
-    logger.info(f"Created {chunk_count} chunks from Markdown files")
+    # Report results
+    logger.info(f"Created {chunk_count} chunks from {processed_files} Markdown files")
+    
+    if problematic_files:
+        logger.warning(f"Skipped {len(problematic_files)} problematic files: {', '.join(problematic_files[:5])}" + 
+                       (f" and {len(problematic_files) - 5} more" if len(problematic_files) > 5 else ""))
 
 
 if __name__ == "__main__":

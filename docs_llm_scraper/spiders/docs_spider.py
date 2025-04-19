@@ -97,6 +97,14 @@ class DocsSpider(scrapy.Spider):
             depth: Current crawl depth
         """
         url = response.url
+        request_url = response.request.url
+        
+        # Handle redirects - map original URL to final URL
+        if request_url != url and request_url in self.start_urls:
+            logger.info(f"Redirect detected: {request_url} -> {url}")
+            # Update start_urls if this was a redirect from start_url
+            if self.start_urls[0] == request_url:
+                self.start_urls[0] = url
         
         if url in self.visited_urls:
             return

@@ -288,7 +288,43 @@ class LlamaAgent:
                 from types import SimpleNamespace
                 
                 content = ""
-                if any(kw in keywords for kw in ["vector", "database", "vectordb", "faiss", "chromadb", "pgvector"]):
+                if any(kw in keywords for kw in ["embed", "embedding", "embeddings", "vector"]):
+                    content = """
+Llama Stack provides embedding functionality through its API:
+
+To create embeddings in Llama Stack:
+
+1. Choose an embedding model:
+   - Supported models include "all-MiniLM-L6-v2" (384 dimensions), "text-embedding-ada-002", etc.
+
+2. Use the embeddings API to generate vectors:
+   ```python
+   embeddings = client.embeddings.create(
+       texts=["Your text to embed"],
+       model="all-MiniLM-L6-v2"
+   )
+   ```
+
+3. For vector database operations:
+   ```python
+   # Register a vector database
+   client.vector_dbs.register(
+       vector_db_id="my_vector_db",
+       embedding_model="all-MiniLM-L6-v2",  # Model used for embeddings 
+       embedding_dimension=384,             # Must match the embedding model's output dimension
+       provider_id="faiss"                  # Vector DB provider
+   )
+   
+   # Insert chunks with automatic embedding generation
+   client.vector_io.insert(
+       vector_db_id="my_vector_db",
+       chunks=[Chunk(content="text to embed", metadata={})]
+   )
+   ```
+
+The embedding model and dimension must be compatible with your vector database.
+"""
+                elif any(kw in keywords for kw in ["vector", "database", "vectordb", "faiss", "chromadb", "pgvector"]):
                     content = """
 Llama Stack supports the following vector database providers:
 
@@ -424,8 +460,44 @@ For more specific information, please ask about a particular aspect of Llama Sta
                         if hasattr(event.tool_call_result, 'content'):
                             rag_results.append(event.tool_call_result.content)
             
-            # If we found RAG results, return them
+            # If we found RAG results, use them to generate a response with the model
             if rag_results:
+                # Try to use the model to answer based on the RAG results
+                try:
+                    # Create a follow-up prompt that asks the model to answer based on RAG results
+                    context = "\n\n".join(rag_results)
+                    follow_up_prompt = (
+                        f"Based on the following documentation excerpts, please answer the user's question: '{query}'\n\n"
+                        f"Documentation:\n{context}\n\n"
+                        f"Provide a concise, helpful answer that directly addresses the question."
+                    )
+                    
+                    # Call the model to generate a response based on the context
+                    follow_up_resp = agent.create_turn(
+                        session_id=session_id,
+                        messages=[{
+                            "role": "user", 
+                            "content": follow_up_prompt,
+                            "token_count": max(1, len(follow_up_prompt.split()))
+                        }],
+                        stream=False
+                    )
+                    
+                    # Extract the model's response
+                    if hasattr(follow_up_resp, 'output_message') and follow_up_resp.output_message:
+                        return follow_up_resp.output_message.content
+                    elif hasattr(follow_up_resp, 'content') and follow_up_resp.content:
+                        return follow_up_resp.content
+                    elif hasattr(follow_up_resp, 'message') and follow_up_resp.message:
+                        if hasattr(follow_up_resp.message, 'content'):
+                            return follow_up_resp.message.content
+                    
+                    # If we couldn't get a proper response, fall back to showing the RAG results
+                    logger.warning("Couldn't generate a response from the model based on RAG results")
+                except Exception as e:
+                    logger.error(f"Error generating response from model based on RAG results: {str(e)}")
+                
+                # Fallback: just return the RAG results directly
                 return "Based on the documentation, I found: " + "\n\n".join(rag_results)
                 
             # Fallback to default message

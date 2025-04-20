@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from docs_llm_scraper.agent import LlamaAgent
+from docs_llm_scraper import LlamaAgent
 from docs_llm_scraper.utils import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -68,6 +68,14 @@ def chat(
     setup_logging()
     
     try:
+        # Set up diagnostic logging for the llama_stack library
+        llama_stack_logger = logging.getLogger("llama_stack")
+        llama_stack_logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+        
+        # Set up client logging
+        llama_stack_client_logger = logging.getLogger("llama_stack_client")
+        llama_stack_client_logger.setLevel(logging.DEBUG if verbose else logging.INFO)
+        
         logger.info(f"Starting chat agent with docs-llm-pkg at {docs_pkg}")
         
         # Create agent with proper model ID

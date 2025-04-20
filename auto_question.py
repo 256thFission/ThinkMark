@@ -4,7 +4,7 @@ Script that automatically asks a question and returns the answer.
 """
 import sys
 import logging
-from docs_llm_scraper.agent import LlamaAgent
+from docs_llm_scraper import LlamaAgent
 
 # Setup logging
 logging.basicConfig(

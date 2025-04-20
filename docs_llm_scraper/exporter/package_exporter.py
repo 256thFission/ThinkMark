@@ -530,10 +530,12 @@ class PackageExporter:
                     if page_path.endswith(".md"):
                         page_path = page_path[:-3]  # Remove ".md" extension
                     
-                    # Add to index with reference to original chunk file
+                    # Add to index with reference to original chunk file - use actual filename
+                    # The issue was here - chunk_id might not match the actual filename
+                    # causing file not found errors when the agent tries to load them
                     chunks_index[chunk_id] = {
                         "slug": page_path,
-                        "file": f"chunks/{chunk_id}.json"
+                        "file": f"chunks/{chunk_file.name}"
                     }
             except Exception as e:
                 logger.error(f"Error processing chunk file {chunk_file}: {str(e)}")

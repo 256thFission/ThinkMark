@@ -4,10 +4,21 @@ A hackathon-friendly CLI that crawls documentation sites and outputs an LLM-read
 
 ## Recent Updates
 
+- **Enhanced terminal experience with rich UI and character personas**:
+  - Added beautiful rich-formatted UI with color themes and panels
+  - Implemented animated thinking spinners with varied messages
+  - Created progress bars for initialization and loading
+  - Added Markdown rendering for code blocks and formatting
+  - Introduced character personas (Assistant, Scholar, Coder, Concise)
+  - Silenced noisy logs while maintaining file logging for diagnostics
+  - Added `--pretty/--no-pretty` flag to toggle enhanced UI
+  - Added `--show-logs` option for debugging
 - **Enhanced embedding models for improved semantic search**:
   - Added support for high-quality embedding models (BAAI/bge series, all-mpnet-base-v2)
   - Implemented semantic chunking optimizations for better retrieval
   - Added command-line options to select different embedding models
+  - Added environment variable configuration via .env file
+  - Implemented force_embedding_model option to override defaults
   - Improved diagnostics with detailed search result reporting
   - Enhanced content cleaning to optimize embedding quality
 - Fixed chat command to work properly with interactive input and test mode:
@@ -17,7 +28,6 @@ A hackathon-friendly CLI that crawls documentation sites and outputs an LLM-read
   - Improved error handling in agent.py to provide contextual responses instead of generic fallbacks
   - Fixed issue with hardcoded responses in error handling paths
   - Enhanced response variety by adding context-aware fallback responses
-  - Improved the chat interface with clearer prompts and response formatting
 - Added chat agent capability using Llama Stack to interact with documentation
 - Fixed URL mapping issue that was causing "No URL found" warnings
 - Added proper tracking of HTML files to their source URLs
@@ -77,8 +87,13 @@ docs-llm-scraper https://docs.example.com/
 ### Chatting with Documentation
 
 ```bash
-# Start an interactive chat with documentation
+# Start an interactive chat with documentation (with pretty UI)
 docs-llm-scraper chat
+
+# Use different character personas
+docs-llm-scraper chat --character scholar  # Scholarly, comprehensive responses
+docs-llm-scraper chat --character coder    # Code-focused with examples
+docs-llm-scraper chat --character concise  # Brief, to-the-point answers
 
 # Specify a different docs-llm-pkg directory
 docs-llm-scraper chat ./my-docs-package
@@ -98,8 +113,14 @@ docs-llm-scraper chat --no-ingest
 # Run in test mode with predefined questions
 docs-llm-scraper chat --test
 
+# Disable pretty UI if terminal doesn't support it
+docs-llm-scraper chat --no-pretty
+
+# Show logs in the terminal
+docs-llm-scraper chat --show-logs
+
 # Advanced usage with custom configuration
-docs-llm-scraper chat ./my-docs-package --model meta-llama/Llama-3-70B-Instruct --embedding-model BAAI/bge-large-en-v1.5 --vector-db my_custom_db
+docs-llm-scraper chat ./my-docs-package --model meta-llama/Llama-3-70B-Instruct --embedding-model BAAI/bge-large-en-v1.5 --character coder --vector-db my_custom_db
 ```
 
 ## Configuration

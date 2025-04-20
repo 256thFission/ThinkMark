@@ -28,6 +28,16 @@ def chat(
         "--provider", "-p",
         help="Provider ID (e.g., 'fireworks', 'openai', 'ollama')"
     ),
+    embedding_model: str = typer.Option(
+        None,  # Default value is None to allow loading from .env
+        "--embedding-model", "-e",
+        help="Embedding model to use for vector search (e.g., 'BAAI/bge-small-en-v1.5', 'all-mpnet-base-v2')"
+    ),
+    vector_db_id: str = typer.Option(
+        "docs_assistant",
+        "--vector-db", 
+        help="Vector database ID"
+    ),
     ingest: bool = typer.Option(
         True,
         "--ingest/--no-ingest",
@@ -86,11 +96,30 @@ def chat(
             logger.info(f"Using provider model ID: {model_id}")
         else:
             model_id = model
-            
+        
+        # Get embedding model from environment variable if not provided
+        import os
+        import dotenv
+        
+        # Load environment variables
+        dotenv.load_dotenv()
+        
+        # Use embedding_model from command line or fall back to env var or default
+        final_embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
+        force_embedding = os.getenv("FORCE_EMBEDDING_MODEL", "").lower() in ("true", "1", "yes")
+        
+        # Log embedding model information    
+        logger.info(f"Using embedding model: {final_embedding_model} with vector database: {vector_db_id}")
+        if force_embedding:
+            logger.info("FORCE_EMBEDDING_MODEL is enabled - will attempt to override LlamaStack's default")
+        
         llama_agent = LlamaAgent(
             docs_pkg_path=str(docs_pkg),
             model_id=model_id,
             provider_id=provider,
+            embedding_model=final_embedding_model,
+            vector_db_id=vector_db_id,
+            force_embedding_model=force_embedding,
             verbose=verbose
         )
         

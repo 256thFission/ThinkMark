@@ -40,6 +40,7 @@ def register_vector_store(
     db_id: str = "docs_assistant",
     embedding_model: str = "BAAI/bge-small-en-v1.5",  # Higher quality model than all-MiniLM-L6-v2
     embedding_dimension: int = 384,
+    force_embedding_model: bool = False,
 ) -> str:
     """Return an existing FAISS vector DB or create a new one in‑memory.
     
@@ -53,6 +54,8 @@ def register_vector_store(
             - "all-MiniLM-L6-v2" (smaller, faster, 384 dimensions)
             - "all-mpnet-base-v2" (quality focus, 768 dimensions)
         embedding_dimension: Dimension of the embedding vectors
+        force_embedding_model: If True, attempt to force LlamaStack to use the specified 
+            embedding_model by recreating the vector database if it already exists
     """
     # Ensure embedding dimension matches the selected model
     model_dimensions = {
@@ -73,13 +76,43 @@ def register_vector_store(
         if client.vector_dbs.retrieve(vector_db_id=db_id):  # already exists
             LOGGER.info(f"Found existing vector database: {db_id}")
             
-            # Delete and recreate with new embedding model to ensure model consistency
-            try:
-                LOGGER.info(f"Recreating vector database with embedding model: {embedding_model}")
-                client.vector_dbs.deregister(vector_db_id=db_id)
-            except Exception as delete_err:
-                LOGGER.warning(f"Could not deregister existing vector database: {delete_err}")
-                # Continue with existing vector store
+            # Only try to recreate if force_embedding_model is True
+            if force_embedding_model:
+                # Delete and recreate with new embedding model to ensure model consistency
+                try:
+                    LOGGER.info(f"Force embedding model is enabled - recreating vector database with model: {embedding_model}")
+                    
+                    # Try various approaches to recreate the database
+                    try:
+                        # First try the standard API if available
+                        if hasattr(client.vector_dbs, "deregister"):
+                            client.vector_dbs.deregister(vector_db_id=db_id)
+                            LOGGER.info("Successfully deregistered existing vector database")
+                        # Try alternative approaches
+                        elif hasattr(client.vector_dbs, "delete"):
+                            client.vector_dbs.delete(vector_db_id=db_id)
+                            LOGGER.info("Successfully deleted existing vector database")
+                        elif hasattr(client.vector_dbs, "unregister"):
+                            client.vector_dbs.unregister(vector_db_id=db_id)
+                            LOGGER.info("Successfully unregistered existing vector database")
+                        else:
+                            # If no direct method, try a _delete private method
+                            if hasattr(client.vector_dbs, "_delete"):
+                                client.vector_dbs._delete(f"/vector_dbs/{db_id}")
+                                LOGGER.info("Successfully deleted existing vector database via private API")
+                            else:
+                                LOGGER.warning("No method found to delete vector database")
+                                return db_id
+                    except Exception as internal_err:
+                        LOGGER.warning(f"Error during vector database recreation: {internal_err}")
+                        return db_id
+                    
+                except Exception as delete_err:
+                    LOGGER.warning(f"Could not recreate vector database: {delete_err}")
+                    # Continue with existing vector store
+                    return db_id
+            else:
+                LOGGER.info(f"Using existing vector database (force_embedding_model is disabled)")
                 return db_id
     except Exception as e:  # DB does not exist ⇒ create
         LOGGER.debug(f"Vector DB not found ({e}), creating new one")

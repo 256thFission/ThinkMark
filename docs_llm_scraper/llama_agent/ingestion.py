@@ -140,18 +140,26 @@ def ingest_chunks(
     # Insert chunks into vector store
     client.vector_io.insert(vector_db_id=vector_store, chunks=chunks)
     
-    # Log completion message
-    # Note: Despite configuring a specific embedding model, LlamaStack may fall back to all-MiniLM-L6-v2
-    # The actual model used is determined by LlamaStack's internal configuration
+    # Log completion message about the chunks
     try:
         vector_db_info = client.vector_dbs.retrieve(vector_db_id=vector_store)
         # Try to determine what model was actually used
         embedding_model = getattr(vector_db_info, 'embedding_model', 'unknown')
-        actual_model = "all-MiniLM-L6-v2"  # This appears to be what's actually used according to logs
-        LOGGER.info(f"Chunk ingestion complete. {len(chunks)} chunks embedded.")
-        LOGGER.info(f"Configured model: {embedding_model}, actual model used may be: {actual_model}")
+        
+        # Check if we're using the sentence-transformers provider (indicates using all-MiniLM-L6-v2)
+        provider_id = getattr(vector_db_info, 'provider_id', 'unknown')
+        
+        if provider_id == 'sentence-transformers' or embedding_model == 'all-MiniLM-L6-v2':
+            actual_model = "all-MiniLM-L6-v2"
+            LOGGER.info(f"Chunk ingestion complete. {len(chunks)} chunks embedded.")
+            LOGGER.info(f"Configured model may differ from actual model used.")
+            LOGGER.info(f"Requested model: {embedding_model}, LlamaStack is using: {actual_model}")
+            LOGGER.info(f"To force using a specific model, set FORCE_EMBEDDING_MODEL=true in your .env file.")
+        else:
+            LOGGER.info(f"Chunk ingestion complete. {len(chunks)} chunks embedded with model: {embedding_model}")
     except Exception as e:
         LOGGER.info(f"Chunk ingestion complete. {len(chunks)} chunks embedded.")
+        LOGGER.debug(f"Could not retrieve vector database info: {e}")
     
     # Test retrieval to verify metadata is preserved
     try:

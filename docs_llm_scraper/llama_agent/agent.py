@@ -166,6 +166,7 @@ class LlamaAgent:
         provider_id: str = "fireworks",
         embedding_model: str = "BAAI/bge-small-en-v1.5",
         vector_db_id: str = "docs_assistant",
+        force_embedding_model: bool = False,
         load_env: bool = True,
         verbose: bool = False,
     ) -> None:
@@ -182,6 +183,7 @@ class LlamaAgent:
                 - "all-MiniLM-L6-v2" (smaller, faster, 384 dimensions)
                 - "all-mpnet-base-v2" (quality focus, 768 dimensions)
             vector_db_id: ID for the vector database
+            force_embedding_model: Attempt to override LlamaStack's default embedding model
             load_env: Whether to load environment variables
             verbose: Enable verbose logging
         """
@@ -203,8 +205,11 @@ class LlamaAgent:
         self.provider_id = provider_id
         self.embedding_model = embedding_model
         self.vector_db_id = vector_db_id
+        self.force_embedding_model = force_embedding_model
         
         LOGGER.info(f"Initializing LlamaAgent with LLM model={model_id}, embedding model={embedding_model}")
+        if force_embedding_model:
+            LOGGER.info("Force embedding model is enabled - will attempt to override LlamaStack's default")
         
         # Initialize the client and register vector store
         self.client: LlamaStackAsLibraryClient = configure_client(provider_id, model_id)
@@ -227,7 +232,8 @@ class LlamaAgent:
         self.vector_store: str = register_vector_store(
             self.client, 
             db_id=vector_db_id,
-            embedding_model=embedding_model
+            embedding_model=embedding_model,
+            force_embedding_model=force_embedding_model
         )
         
         # No patching of vector_io - we'll handle errors in the chat method instead

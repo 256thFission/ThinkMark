@@ -229,7 +229,31 @@ def chat(
                 final_embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
                 force_embedding = os.getenv("FORCE_EMBEDDING_MODEL", "").lower() in ("true", "1", "yes")
                 
-                progress.update(task, advance=0.2)
+                # Quippy loading messages
+                loading_messages = [
+                    "Firing up the neural networks...",
+                    "Dusting off the documentation...",
+                    "Warming up the vector engines...",
+                    "Brewing knowledge extraction algorithms...",
+                    "Calibrating semantic understanding...",
+                    "Teaching robot to read faster than you...",
+                    "Untangling the web of documentation...",
+                    "Sharpening AI neural pathways...",
+                    "Polishing the crystal ball...",
+                    "Herding the wild documentation chunks...",
+                    "Converting coffee to code explanations...",
+                    "Illuminating the dark corners of the docs...",
+                    "Think MARK(down) THINK! What will you have in 500 years??"
+                ]
+                
+                # Display first quippy message
+                progress.update(task, description=f"[progress]{random.choice(loading_messages)}[/progress]")
+                progress.update(task, advance=0.1)
+                time.sleep(0.6)  # Short pause for effect
+                
+                # Display second quippy message
+                progress.update(task, description=f"[progress]{random.choice(loading_messages)}[/progress]")
+                progress.update(task, advance=0.1)
                 
                 # Initialize agent
                 llama_agent = LlamaAgent(
@@ -242,12 +266,18 @@ def chat(
                     verbose=verbose
                 )
                 
-                progress.update(task, advance=0.3)
+                # Display third quippy message
+                progress.update(task, description=f"[progress]{random.choice(loading_messages)}[/progress]")
+                progress.update(task, advance=0.2)
+                time.sleep(0.5)  # Short pause for effect
                 
                 # Ingest chunks if requested
                 if ingest:
                     progress.update(task, description="[progress]Ingesting documentation into vector database...[/progress]")
                     llama_agent.ingest_chunks()
+                    # After ingestion, show another quippy message
+                    progress.update(task, description=f"[progress]{random.choice(loading_messages)}[/progress]")
+                    time.sleep(0.4)  # Short pause for effect
                 
                 progress.update(task, description="[progress]Creating agent and session...[/progress]", advance=0.3)
                 
@@ -255,7 +285,11 @@ def chat(
                 agent = llama_agent.create_agent(instructions)
                 session = llama_agent.create_session(agent, session_id)
                 
-                progress.update(task, advance=0.2, completed=True)
+                # Final quippy message before completion
+                progress.update(task, description="[progress]Activating documentation superpowers...[/progress]")
+                time.sleep(0.7)  # Slightly longer pause for dramatic effect
+                
+                progress.update(task, advance=0.3, completed=True)
         else:
             # Standard initialization without progress display
             logger.info(f"Starting chat agent with docs-llm-pkg at {docs_pkg}")

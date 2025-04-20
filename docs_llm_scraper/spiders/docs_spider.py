@@ -3,10 +3,11 @@ Scrapy spider for crawling documentation sites according to configuration.
 """
 import json
 import logging
-import os
+import re
+import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
-from urllib.parse import urljoin, urlparse
+from typing import Any, Dict, Set
+from urllib.parse import urlparse, urldefrag, urlunparse
 
 import scrapy
 from scrapy.http import Response
@@ -14,6 +15,8 @@ from scrapy.linkextractors import LinkExtractor
 from slugify import slugify
 
 logger = logging.getLogger(__name__)
+
+from .link_filters import should_skip_url, is_html_doc, should_follow_url
 
 
 class DocsSpider(scrapy.Spider):
@@ -24,7 +27,18 @@ class DocsSpider(scrapy.Spider):
     and extraction rules.
     """
     name = "docs_spider"
+    custom_settings = {
+        'AUTOTHROTTLE_ENABLED': False,
+        'DOWNLOAD_DELAY': 0.1,
+        'CONCURRENT_REQUESTS': 16,
+        'CONCURRENT_REQUESTS_PER_DOMAIN': 8,
+        'DEPTH_LIMIT': 2,
+        'HTTPCACHE_ENABLED': True,
+        'HTTPCACHE_EXPIRATION_SECS': 3600,
+    }
+
     
+
     def __init__(
         self, 
         start_url: str,
@@ -49,9 +63,19 @@ class DocsSpider(scrapy.Spider):
         self.exclude_paths = self.config.get('exclude_paths', [])
         self.max_depth = self.config.get('max_depth', 4)
         
-        # Create link extractor
+        # Create link extractor with filters to avoid raw/source and excluded paths
         self.link_extractor = LinkExtractor(
-            allow_domains=self.allowed_domains
+            allow_domains=self.allowed_domains,
+            allow=self.include_paths or (),
+            deny=self.exclude_paths + [
+                r"/_sources/",
+                r"/raw/",
+                r"/source/",
+                r"/_static/",
+                r"/_downloads/"
+            ],
+            canonicalize=True,
+            strip=True,
         )
         
         # Track visited URLs and page hierarchy
@@ -60,38 +84,14 @@ class DocsSpider(scrapy.Spider):
         self.parent_map: Dict[str, str] = {}
     
     def should_follow_url(self, url: str) -> bool:
-        """
-        Determine if a URL should be followed based on configuration.
-        
-        Args:
-            url: URL to check
-            
-        Returns:
-            bool: True if URL should be followed, False otherwise
-        """
-        # Make sure url is a string (not a typer.Argument object)
-        if not isinstance(url, str):
-            url = str(url)
-            
-        # Parse URL to get path
-        parsed_url = urlparse(url)
-        path = parsed_url.path
-        
-        # Check if path is in excluded paths
-        for exclude in self.exclude_paths:
-            if path.startswith(exclude):
-                return False
-        
-        # If include_paths is set, only follow those paths
-        if self.include_paths:
-            for include in self.include_paths:
-                if path.startswith(include):
-                    return True
-            return False
-        
-        # Otherwise follow all non-excluded paths
-        return True
-    
+        return should_follow_url(url, self.include_paths, self.exclude_paths)
+
+    def should_skip_url(self, url: str) -> bool:
+        return should_skip_url(url)
+
+    def _is_html_doc(self, url: str) -> bool:
+        return is_html_doc(url)
+
     def parse(self, response: Response, depth: int = 0):
         """
         Parse the response and extract content.
@@ -102,7 +102,15 @@ class DocsSpider(scrapy.Spider):
         """
         url = response.url
         request_url = response.request.url
-        
+
+        # Normalize URL for deduplication
+        canonical_url = self._normalize_url(url)
+
+        # Heuristic filter for raw/source pages
+        if should_skip_url(url):
+            logger.info(f"Skipping raw/source-like page: {url}")
+            return
+
         # Handle redirects - map original URL to final URL
         if request_url != url and request_url in self.start_urls:
             logger.info(f"Redirect detected: {request_url} -> {url}")
@@ -110,11 +118,15 @@ class DocsSpider(scrapy.Spider):
             if self.start_urls[0] == request_url:
                 self.start_urls[0] = url
         
-        if url in self.visited_urls:
+        # Check if we've already visited this URL (using the normalized version)
+        if canonical_url in self.visited_urls:
+            logger.debug(f"Skipping already visited URL: {url}")
             return
         
-        self.visited_urls.add(url)
+        # Add normalized URL to visited set
+        self.visited_urls.add(canonical_url)
         logger.info(f"Parsing {url} (depth: {depth})")
+        logger.debug(f"Parsing depth {depth} for {url}")
         
         # Don't follow links beyond max_depth
         if depth >= self.max_depth:
@@ -142,24 +154,66 @@ class DocsSpider(scrapy.Spider):
             for link in self.link_extractor.extract_links(response):
                 child_url = link.url
                 
+                # Heuristic filter for raw/source pages (linked)
+                if should_skip_url(child_url):
+                    logger.info(f"Skipping raw/source-like linked page: {child_url}")
+                    continue
+                
+                # Skip non-HTML links
+                if not is_html_doc(child_url):
+                    logger.debug(f"Skipping non-HTML link: {child_url}")
+                    continue
+                
                 # Skip already visited URLs
                 if child_url in self.visited_urls:
                     continue
                     
                 # Check if URL should be followed
-                if not self.should_follow_url(child_url):
+                if not should_follow_url(child_url, self.include_paths, self.exclude_paths):
                     continue
+                
+                # Debug: log which URLs will be followed
+                logger.debug(f"→ Will follow: {child_url}")
                 
                 # Add to parent map
                 self.parent_map[child_url] = url
                 
                 # Follow link
                 yield scrapy.Request(
-                    child_url, 
+                    child_url,
                     callback=self.parse,
-                    cb_kwargs={"depth": depth + 1}
+                    cb_kwargs={"depth": depth + 1},
+                    meta={"download_timeout": 10}, 
                 )
     
+    def _normalize_url(self, url: str) -> str:
+        """
+        Normalize URL to prevent duplicates from variations like:
+        - /foo vs /foo/ vs /foo/index.html
+        - URLs with fragments (#section)
+        
+        Args:
+            url: URL to normalize
+            
+        Returns:
+            str: Normalized URL
+        """
+        # Remove fragments
+        url, _ = urldefrag(url)
+        
+        # Parse URL
+        parsed = urlparse(url)
+        
+        # Normalize paths that end with /index.html
+        if parsed.path.endswith("/index.html"):
+            parsed = parsed._replace(path=parsed.path[:-11])
+        # Ensure paths ending with / are normalized
+        elif parsed.path.endswith("/") and len(parsed.path) > 1:
+            parsed = parsed._replace(path=parsed.path[:-1])
+            
+        # Return reconstructed URL
+        return urlunparse(parsed)
+
     def _save_html(self, response: Response) -> None:
         """
         Save raw HTML to disk for later processing.
@@ -171,10 +225,11 @@ class DocsSpider(scrapy.Spider):
         filename = self._url_to_slug(url) + ".html"
         filepath = self.raw_html_dir / filename
         
+        start_time = time.time()
         with open(filepath, 'wb') as f:
             f.write(response.body)
-        
-        logger.debug(f"Saved HTML: {filepath}")
+        duration = time.time() - start_time
+        logger.debug(f"Saved HTML: {filepath} (took {duration:.2f}s)")
         
         # Update URLs map
         self._update_urls_map(url, filename)

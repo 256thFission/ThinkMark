@@ -1,4 +1,4 @@
-# ThinkMark: Your Documentation Chatbot Generator
+# ThinkMark: Doc links into LLM Friendly Markdown
 
 **Turn any documentation website into an interactive AI assistant in minutes.**
 

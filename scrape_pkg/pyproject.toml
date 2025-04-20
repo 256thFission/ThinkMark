@@ -1,0 +1,36 @@
+[project]
+name = "scrape-pkg"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Phillip",email = "thephilliplin@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "typer (>=0.15.2,<0.16.0)"
+]
+
+[tool.poetry]
+name = "scrape-pkg"
+version = "0.1.0"
+description = "Scrapy‑based documentation crawler that emits LLM‑ready packages"
+authors = ["Phillip <thephilliplin@gmail.com>"]
+packages = [{ include = "scrape_pkg", from = "src" }]
+
+[tool.poetry.dependencies]
+scrapy = "^2.11"
+python-slugify = "^8.0"
+
+[tool.poetry.scripts]            # <— command‑line entry points
+scrape-docs = "scrape_pkg.cli:app"
+emit-llms  = "scrape_pkg.emit_llms:main"
+
+[tool.poetry.group.dev.dependencies]   # optional
+pytest = "^8.1"
+
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

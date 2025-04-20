@@ -4,12 +4,11 @@ A hackathon-friendly CLI that crawls documentation sites and outputs an LLM-read
 
 ## Recent Updates
 
-- **Enhanced terminal experience with rich UI and character personas**:
+- **Enhanced terminal experience with rich UI**:
   - Added beautiful rich-formatted UI with color themes and panels
   - Implemented animated thinking spinners with varied messages
   - Created progress bars for initialization and loading
   - Added Markdown rendering for code blocks and formatting
-  - Introduced character personas (Assistant, Scholar, Coder, Concise)
   - Silenced noisy logs while maintaining file logging for diagnostics
   - Added `--pretty/--no-pretty` flag to toggle enhanced UI
   - Added `--show-logs` option for debugging
@@ -90,10 +89,7 @@ docs-llm-scraper https://docs.example.com/
 # Start an interactive chat with documentation (with pretty UI)
 docs-llm-scraper chat
 
-# Use different character personas
-docs-llm-scraper chat --character scholar  # Scholarly, comprehensive responses
-docs-llm-scraper chat --character coder    # Code-focused with examples
-docs-llm-scraper chat --character concise  # Brief, to-the-point answers
+# Enhanced terminal experience with colorful output and animations
 
 # Specify a different docs-llm-pkg directory
 docs-llm-scraper chat ./my-docs-package
@@ -120,7 +116,7 @@ docs-llm-scraper chat --no-pretty
 docs-llm-scraper chat --show-logs
 
 # Advanced usage with custom configuration
-docs-llm-scraper chat ./my-docs-package --model meta-llama/Llama-3-70B-Instruct --embedding-model BAAI/bge-large-en-v1.5 --character coder --vector-db my_custom_db
+docs-llm-scraper chat ./my-docs-package --model meta-llama/Llama-3-70B-Instruct --embedding-model BAAI/bge-large-en-v1.5 --vector-db my_custom_db
 ```
 
 ## Configuration

@@ -168,11 +168,7 @@ def chat(
         "--show-logs",
         help="Show logging output"
     ),
-    character: str = typer.Option(
-        "assistant",
-        "--character", "-c",
-        help="Character persona for the chat bot (assistant, scholar, coder, concise)"
-    )
+    # Removed character persona option as requested
 ) -> None:
     """
     Start an interactive chat with a RAG-enabled Llama Stack agent.
@@ -199,20 +195,9 @@ def chat(
         llama_stack_client_logger = logging.getLogger("llama_stack_client")
         llama_stack_client_logger.setLevel(logging.DEBUG if verbose else logging.INFO)
     
-    # Determine character persona instructions
-    character_instructions = {
-        "assistant": "You are a helpful documentation assistant. Use the knowledge_search tool to answer questions, and cite the document slug. If unsure, state so honestly.",
-        "scholar": "You are a scholarly expert in this documentation. Provide comprehensive answers with accurate citations to specific parts of the docs. Analyze concepts thoroughly and consider different perspectives.",
-        "coder": "You are a code-focused documentation expert. Prioritize providing code examples, practical usage patterns, and clear technical explanations. Always include relevant code snippets from the docs when available.",
-        "concise": "You are a documentation assistant focused on brevity. Provide the most concise, accurate answers possible without unnecessary elaboration. Use bullet points when appropriate for clarity."
-    }
-    
-    # Get the correct instructions based on character or use custom ones
+    # Use default instructions if none provided
     if not instructions:
-        instructions = character_instructions.get(
-            character, 
-            character_instructions["assistant"]  # Default if character not found
-        )
+        instructions = "You are a helpful documentation assistant. Use the knowledge_search tool to answer questions, and cite the document slug. If unsure, state so honestly."
     
     try:
         # Create progress display for initialization
@@ -313,21 +298,15 @@ def chat(
             session = llama_agent.create_session(agent, session_id)
             logger.info(f"Agent ready with session ID: {session}")
         
-        # Get emoji for the chosen character
-        character_emoji = {
-            "assistant": "🤖",
-            "scholar": "🧠",
-            "coder": "💻",
-            "concise": "⚡"
-        }.get(character, "🤖")
+        # Use a standard bot emoji
+        bot_emoji = "🤖"
         
         # Display welcome message with appropriate styling
         if pretty:
             console.print()
             welcome_panel = Panel(
                 f"Welcome to the [bold cyan]{llama_agent.site_name}[/bold cyan] Documentation Assistant!\n\n"
-                f"Character: [bold]{character.title()}[/bold] {character_emoji}\n"
-                "Ask questions about the documentation or type [bold red]exit[/bold red] to quit.",
+                f"Ask questions about the documentation or type [bold red]exit[/bold red] to quit.",
                 title="ThinkMark Documentation Assistant",
                 border_style="cyan",
                 expand=False
@@ -336,8 +315,8 @@ def chat(
             console.print()
         else:
             # Standard welcome message
-            typer.echo(f"\n{character_emoji} Welcome to the {llama_agent.site_name} Documentation Assistant!")
-            typer.echo(f"Character: {character.title()}")
+            typer.echo(f"\n{bot_emoji} Welcome to the {llama_agent.site_name} Documentation Assistant!")
+            # Character selection removed
             typer.echo("Ask questions about the documentation or type 'exit' to quit.\n")
         
         # In test mode, use predefined questions
@@ -358,10 +337,10 @@ def chat(
                     # Format markdown in response if it looks like markdown
                     if "```" in response or "**" in response or "#" in response:
                         response_md = Markdown(response)
-                        console.print(f"[bot]{character_emoji}:[/bot]")
+                        console.print(f"[bot]{bot_emoji}:[/bot]")
                         console.print(Panel(response_md, border_style="cyan", expand=False))
                     else:
-                        console.print(f"[bot]{character_emoji}:[/bot] {response}")
+                        console.print(f"[bot]{bot_emoji}:[/bot] {response}")
                     console.print()
                 else:
                     # Standard display
@@ -369,7 +348,7 @@ def chat(
                     typer.echo("Thinking...", nl=False)
                     response = llama_agent.chat(agent, session, question)
                     typer.echo("\r" + " " * 12 + "\r", nl=False)
-                    typer.echo(f"{character_emoji}: {response}\n")
+                    typer.echo(f"{bot_emoji}: {response}\n")
             
             if pretty:
                 console.print("[success]Test completed. Exiting...[/success]")
@@ -389,7 +368,7 @@ def chat(
                         console.print("\n[success]👋 Goodbye![/success]")
                         break
                     
-                    # Animated thinking with the selected character's message
+                    # Animated thinking with varied messages
                     thinking_messages = [
                         "Thinking",
                         "Searching docs",
@@ -403,10 +382,10 @@ def chat(
                     # Format markdown in response if it looks like markdown
                     if "```" in response or "**" in response or "#" in response:
                         response_md = Markdown(response)
-                        console.print(f"[bot]{character_emoji}:[/bot]")
+                        console.print(f"[bot]{bot_emoji}:[/bot]")
                         console.print(Panel(response_md, border_style="cyan", expand=False))
                     else:
-                        console.print(f"[bot]{character_emoji}:[/bot] {response}")
+                        console.print(f"[bot]{bot_emoji}:[/bot] {response}")
                     console.print()
                 else:
                     # Standard input
@@ -420,7 +399,7 @@ def chat(
                     typer.echo("Thinking...", nl=False)
                     response = llama_agent.chat(agent, session, query)
                     typer.echo("\r" + " " * 12 + "\r", nl=False)
-                    typer.echo(f"{character_emoji}: {response}")
+                    typer.echo(f"{bot_emoji}: {response}")
             
             except KeyboardInterrupt:
                 if pretty:

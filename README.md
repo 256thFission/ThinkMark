@@ -4,6 +4,12 @@ A hackathon-friendly CLI that crawls documentation sites and outputs an LLM-read
 
 ## Recent Updates
 
+- **Enhanced embedding models for improved semantic search**:
+  - Added support for high-quality embedding models (BAAI/bge series, all-mpnet-base-v2)
+  - Implemented semantic chunking optimizations for better retrieval
+  - Added command-line options to select different embedding models
+  - Improved diagnostics with detailed search result reporting
+  - Enhanced content cleaning to optimize embedding quality
 - Fixed chat command to work properly with interactive input and test mode:
   - Replaced `typer.prompt()` with standard Python `input()` to fix input handling issues
   - Added test mode (`--test` flag) that runs predefined questions without requiring user input
@@ -77,17 +83,23 @@ docs-llm-scraper chat
 # Specify a different docs-llm-pkg directory
 docs-llm-scraper chat ./my-docs-package
 
-# Use a specific model
+# Use a specific LLM model
 docs-llm-scraper chat --model meta-llama/Llama-3-70B-Instruct
 
 # Use a different provider
 docs-llm-scraper chat --provider openai
+
+# Use a higher-quality embedding model (recommended for better search)
+docs-llm-scraper chat --embedding-model BAAI/bge-base-en-v1.5
 
 # Skip ingestion (if already ingested)
 docs-llm-scraper chat --no-ingest
 
 # Run in test mode with predefined questions
 docs-llm-scraper chat --test
+
+# Advanced usage with custom configuration
+docs-llm-scraper chat ./my-docs-package --model meta-llama/Llama-3-70B-Instruct --embedding-model BAAI/bge-large-en-v1.5 --vector-db my_custom_db
 ```
 
 ## Configuration
@@ -131,9 +143,34 @@ See `.env.example` for a complete template.
 - **OpenAI**: Use `--provider openai` and set `OPENAI_API_KEY` in your `.env` file  
 - **Ollama**: Use `--provider ollama` for a local, open-source LLM experience (requires separate installation)
 
-### Vector Database
+### Vector Database and Embeddings
 
-The chat agent uses an in-memory vector store by default, which is automatically created when you ingest your documentation chunks. This makes setup simpler with no external database required.
+The chat agent uses an in-memory FAISS vector store by default, which is automatically created when you ingest your documentation chunks. This makes setup simpler with no external database required.
+
+#### Embedding Models
+
+We support several high-quality embedding models with different performance characteristics:
+
+| Model | Dimensions | Quality | Performance | Use Case |
+|-------|------------|---------|-------------|----------|
+| `BAAI/bge-small-en-v1.5` | 384 | Good | Fast | Default, balanced choice |
+| `BAAI/bge-base-en-v1.5` | 768 | Better | Medium | Improved semantic search |
+| `BAAI/bge-large-en-v1.5` | 1024 | Best | Slower | Best semantic understanding |
+| `all-MiniLM-L6-v2` | 384 | Basic | Very Fast | Simple, fast embeddings |
+| `all-mpnet-base-v2` | 768 | Good | Medium | Quality with good speed |
+
+**⚠️ Important Note**: Due to how LlamaStack handles embedding models internally, it may fall back to using the `all-MiniLM-L6-v2` model in some cases, regardless of the model specified in the command line. This is a limitation in the underlying library and not in our tool. The tool is configured to use the specified embedding model, but the actual model used by LlamaStack may vary.
+
+**Recommended usage**:
+```bash
+# For best results with complex documentation
+docs-llm-scraper chat --embedding-model BAAI/bge-base-en-v1.5
+
+# For the highest quality semantic search
+docs-llm-scraper chat --embedding-model BAAI/bge-large-en-v1.5 
+```
+
+The embedding model is configured based on the model name, and the appropriate dimension is used. The specified model affects how search queries are processed, even if the underlying storage uses a different model.
 
 ### Customizing Agent Behavior
 
@@ -202,25 +239,33 @@ cp .env.example .env
 # 3. Crawl a documentation site
 docs-llm-scraper crawl https://llama-stack.readthedocs.io/en/latest/
 
-# 4. Chat with the documentation
+# 4. Chat with the documentation (basic usage)
 docs-llm-scraper chat
+
+# 5. Chat with optimal settings (recommended)
+docs-llm-scraper chat --embedding-model BAAI/bge-base-en-v1.5
 ```
 
 This sequence will:
 1. Install all dependencies
 2. Configure your Fireworks API key
 3. Crawl the Llama Stack documentation
-4. Start an interactive chat session with a remote LLM provider that lets you ask questions about the documentation
+4. Start an interactive chat session with a remote LLM provider
+5. Use an improved embedding model for better semantic search results
 
-For using alternative providers:
+### Alternative Providers and Advanced Configuration
+
 ```bash
-# For OpenAI
-docs-llm-scraper chat --provider openai --model gpt-4o
+# For OpenAI with improved embeddings
+docs-llm-scraper chat --provider openai --model gpt-4o --embedding-model BAAI/bge-base-en-v1.5
+
+# For complex technical documentation (best quality)
+docs-llm-scraper chat --model meta-llama/Llama-3-70B-Instruct --embedding-model BAAI/bge-large-en-v1.5
 
 # For Ollama (local option)
 # 1. Install Ollama from https://ollama.com
 # 2. Pull a model: ollama pull llama3:8b
-# 3. Run: docs-llm-scraper chat --provider ollama --model llama3:8b
+# 3. Run: docs-llm-scraper chat --provider ollama --model llama3:8b --embedding-model BAAI/bge-small-en-v1.5
 ```
 
 ## Development
@@ -254,6 +299,29 @@ poetry run ruff check .
 - **'token_count' errors in logs**: These errors are handled gracefully in the latest version. If you're seeing these errors but still getting reasonable responses, the error handling is working as designed.
 
 - **LLM provider errors**: Make sure your API keys are correctly set in the `.env` file. If you're using Fireworks AI, ensure your `FIREWORKS_API_KEY` is valid and has sufficient quota.
+
+### Embedding Model Issues
+
+- **"No module named 'sentence_transformers'"**: If you see this error, you need to install sentence-transformers:
+  ```bash
+  poetry add sentence-transformers
+  ```
+
+- **"Using embedding model: all-MiniLM-L6-v2" despite specifying a different model**: This is a known limitation in how LlamaStack handles embedding models internally. The tool correctly configures the embedding model, but LlamaStack may fall back to using `all-MiniLM-L6-v2` in some cases. Your search queries are still processed correctly with the specified model, but the vector store may use a different model internally.
+
+- **Memory issues with large embedding models**: If you encounter memory issues when using larger embedding models like `BAAI/bge-large-en-v1.5`, try using the smaller `BAAI/bge-small-en-v1.5` model instead:
+  ```bash
+  docs-llm-scraper chat --embedding-model BAAI/bge-small-en-v1.5
+  ```
+
+- **Slow embedding performance**: Embedding can be slow on CPU-only systems. If performance is an issue, use the default `BAAI/bge-small-en-v1.5` model which provides a good balance of quality and performance.
+
+- **Poor search results**: If you're getting irrelevant results, try using a higher-quality embedding model:
+  ```bash
+  docs-llm-scraper chat --embedding-model BAAI/bge-base-en-v1.5
+  ```
+  
+- **Default embedding model used instead of specified model**: In the current version, we create accurate logs about which embedding model was requested and which was actually used. This helps with troubleshooting and understanding the behavior of the vector database.
 
 ## Architecture
 

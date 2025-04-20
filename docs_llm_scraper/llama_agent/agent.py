@@ -164,9 +164,27 @@ class LlamaAgent:
         *,
         model_id: str = "meta-llama/Llama-3-8B-Instruct",
         provider_id: str = "fireworks",
+        embedding_model: str = "BAAI/bge-small-en-v1.5",
+        vector_db_id: str = "docs_assistant",
         load_env: bool = True,
         verbose: bool = False,
     ) -> None:
+        """Initialize the LlamaAgent with documentation and models.
+        
+        Args:
+            docs_pkg_path: Path to documentation package
+            model_id: LLM model to use for answering questions
+            provider_id: Provider for the LLM (fireworks, openai, etc.)
+            embedding_model: Model to use for embeddings. Options:
+                - "BAAI/bge-small-en-v1.5" (balanced quality/performance, 384 dimensions)
+                - "BAAI/bge-base-en-v1.5" (better quality, 768 dimensions)
+                - "BAAI/bge-large-en-v1.5" (high quality, 1024 dimensions)
+                - "all-MiniLM-L6-v2" (smaller, faster, 384 dimensions)
+                - "all-mpnet-base-v2" (quality focus, 768 dimensions)
+            vector_db_id: ID for the vector database
+            load_env: Whether to load environment variables
+            verbose: Enable verbose logging
+        """
         if load_env:
             dotenv.load_dotenv()
 
@@ -183,8 +201,34 @@ class LlamaAgent:
         # --- Llama‑Stack client -------------------------------------------
         self.model_id = model_id
         self.provider_id = provider_id
+        self.embedding_model = embedding_model
+        self.vector_db_id = vector_db_id
+        
+        LOGGER.info(f"Initializing LlamaAgent with LLM model={model_id}, embedding model={embedding_model}")
+        
+        # Initialize the client and register vector store
         self.client: LlamaStackAsLibraryClient = configure_client(provider_id, model_id)
-        self.vector_store: str = register_vector_store(self.client)
+        
+        # Check the available embedding models in the client
+        if hasattr(self.client, "models") and hasattr(self.client.models, "list"):
+            try:
+                LOGGER.info("Checking available embedding models...")
+                models = self.client.models.list()
+                if hasattr(models, "models"):
+                    embedding_models = [m for m in models.models if hasattr(m, "model_type") and str(m.model_type) == "ModelType.embedding"]
+                    if embedding_models:
+                        LOGGER.info(f"Available embedding models: {[m.model_id for m in embedding_models]}")
+                    else:
+                        LOGGER.warning("No embedding models found in client.models.list()")
+            except Exception as e:
+                LOGGER.warning(f"Error listing models: {e}")
+        
+        # Register the vector store with our embedding model
+        self.vector_store: str = register_vector_store(
+            self.client, 
+            db_id=vector_db_id,
+            embedding_model=embedding_model
+        )
         
         # No patching of vector_io - we'll handle errors in the chat method instead
 
@@ -337,15 +381,43 @@ class LlamaAgent:
                     
                     # Log detailed information about search results
                     if direct_results:
-                        LOGGER.info(f"DIAGNOSTIC: Found {len(direct_results)} direct results")
+                        LOGGER.info(f"DIAGNOSTIC: Found {len(direct_results)} direct results for query: '{query}'")
+                        LOGGER.info(f"DIAGNOSTIC: Using embedding model: {self.embedding_model}")
+                        
+                        # Create a summary table of results for easier debugging
+                        result_summary = []
                         for i, chunk in enumerate(direct_results):
                             # Safely check metadata - ensure it exists
                             if not hasattr(chunk, "metadata"):
                                 chunk.metadata = {}
                                 LOGGER.info(f"DIAGNOSTIC: Result {i+1} had no metadata, created empty dict")
                             
-                            LOGGER.info(f"DIAGNOSTIC: Result {i+1} metadata keys: {list(chunk.metadata.keys())}")
-                            LOGGER.info(f"DIAGNOSTIC: Result {i+1} has token_count?: {'token_count' in chunk.metadata}")
+                            # Get score if available
+                            score = getattr(chunk, "score", None)
+                            score_str = f"{score:.4f}" if score is not None else "N/A"
+                            
+                            # Get a content preview
+                            if hasattr(chunk, "content") and chunk.content:
+                                # Clean up content preview by removing HTML comments and extra whitespace
+                                content = chunk.content
+                                if content.startswith("<!-- Source:"):
+                                    content = "\n".join(content.split("\n")[1:])
+                                content_preview = content.replace("\n", " ")[:100] + "..."
+                            else:
+                                content_preview = "No content"
+                            
+                            # Add to summary
+                            result_summary.append({
+                                "rank": i+1,
+                                "slug": chunk.metadata.get("slug", "unknown"),
+                                "score": score_str,
+                                "len": len(getattr(chunk, "content", "")) if hasattr(chunk, "content") else 0,
+                                "preview": content_preview
+                            })
+                            
+                            # Detailed logging for each result
+                            LOGGER.debug(f"DIAGNOSTIC: Result {i+1} metadata keys: {list(chunk.metadata.keys())}")
+                            LOGGER.debug(f"DIAGNOSTIC: Result {i+1} has token_count?: {'token_count' in chunk.metadata}")
                             
                             # Log important metadata values
                             LOGGER.info(f"DIAGNOSTIC: Result {i+1} document_id: {chunk.metadata.get('document_id', 'None')}")
@@ -354,26 +426,28 @@ class LlamaAgent:
                             
                             # Examine the content field
                             if hasattr(chunk, "content"):
-                                content_preview = str(chunk.content)[:100].replace('\n', ' ') + "..." if chunk.content else "None" 
-                                LOGGER.info(f"DIAGNOSTIC: Result {i+1} content preview: {content_preview}")
-                                LOGGER.info(f"DIAGNOSTIC: Result {i+1} content type: {type(chunk.content).__name__}")
-                                LOGGER.info(f"DIAGNOSTIC: Result {i+1} content length: {len(str(chunk.content))}")
+                                LOGGER.debug(f"DIAGNOSTIC: Result {i+1} content type: {type(chunk.content).__name__}")
+                                LOGGER.debug(f"DIAGNOSTIC: Result {i+1} content length: {len(str(chunk.content))}")
                             else:
                                 LOGGER.warning(f"DIAGNOSTIC: Result {i+1} has no content attribute")
-                                
-                            # Check for other attributes that might hold content
-                            LOGGER.info(f"DIAGNOSTIC: Result {i+1} attributes: {dir(chunk)}")
                                 
                             # Add token_count if missing
                             if not chunk.metadata.get('token_count'):
                                 chunk.metadata['token_count'] = estimate_token_count(chunk.content)
-                                LOGGER.info(f"DIAGNOSTIC: Added missing token_count: {chunk.metadata['token_count']}")
+                                LOGGER.debug(f"DIAGNOSTIC: Added missing token_count: {chunk.metadata['token_count']}")
                                 
                             # Examine the score if present
                             if hasattr(chunk, "score"):
                                 LOGGER.info(f"DIAGNOSTIC: Result {i+1} score: {chunk.score}")
+                        
+                        # Print a table of results
+                        LOGGER.info("Search Results Summary:")
+                        LOGGER.info(f"{'Rank':<5} {'Score':<10} {'Length':<7} {'Document':<40} {'Preview':<60}")
+                        LOGGER.info("-" * 120)
+                        for r in result_summary:
+                            LOGGER.info(f"{r['rank']:<5} {r['score']:<10} {r['len']:<7} {r['slug']:<40} {r['preview'][:60]}")
                     else:
-                        LOGGER.warning("DIAGNOSTIC: No direct results found")
+                        LOGGER.warning(f"DIAGNOSTIC: No direct results found for query: '{query}'")
             except Exception as search_exc:
                 LOGGER.error(f"DIAGNOSTIC: Error during direct vector search: {search_exc}")
                 # Continue with normal flow even if direct search fails

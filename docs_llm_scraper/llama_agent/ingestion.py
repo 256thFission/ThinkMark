@@ -115,9 +115,43 @@ def ingest_chunks(
         LOGGER.info(f"DIAGNOSTIC: Chunk has token_count?: {'token_count' in sample_chunk.metadata}")
         LOGGER.info(f"DIAGNOSTIC: Chunk object type: {type(sample_chunk).__name__}")
     
+    # Log some statistics about the chunks before insertion
+    content_lengths = [len(chunk.content) for chunk in chunks]
+    avg_length = sum(content_lengths) / len(content_lengths) if content_lengths else 0
+    min_length = min(content_lengths) if content_lengths else 0
+    max_length = max(content_lengths) if content_lengths else 0
+    
+    LOGGER.info(f"Chunk statistics: {len(chunks)} chunks, avg length: {avg_length:.1f} chars, "
+                f"min: {min_length}, max: {max_length}")
+    
+    # Ensure chunks are optimized for embedding quality
+    for i, chunk in enumerate(chunks):
+        # 1. Remove HTML comments if present
+        if chunk.content.startswith("<!-- Source:"):
+            content_lines = chunk.content.split("\n")
+            if len(content_lines) > 1:
+                chunk.content = "\n".join(content_lines[1:])
+                LOGGER.debug(f"Removed HTML comment from chunk {i}")
+        
+        # 2. Ensure token count is accurate after cleaning
+        if chunk.content:
+            chunk.metadata["token_count"] = estimate_token_count(chunk.content)
+    
     # Insert chunks into vector store
     client.vector_io.insert(vector_db_id=vector_store, chunks=chunks)
-    LOGGER.info("Chunk ingestion complete.")
+    
+    # Log completion message
+    # Note: Despite configuring a specific embedding model, LlamaStack may fall back to all-MiniLM-L6-v2
+    # The actual model used is determined by LlamaStack's internal configuration
+    try:
+        vector_db_info = client.vector_dbs.retrieve(vector_db_id=vector_store)
+        # Try to determine what model was actually used
+        embedding_model = getattr(vector_db_info, 'embedding_model', 'unknown')
+        actual_model = "all-MiniLM-L6-v2"  # This appears to be what's actually used according to logs
+        LOGGER.info(f"Chunk ingestion complete. {len(chunks)} chunks embedded.")
+        LOGGER.info(f"Configured model: {embedding_model}, actual model used may be: {actual_model}")
+    except Exception as e:
+        LOGGER.info(f"Chunk ingestion complete. {len(chunks)} chunks embedded.")
     
     # Test retrieval to verify metadata is preserved
     try:

@@ -169,7 +169,7 @@ class DocsSpider(scrapy.Spider):
                     continue
                     
                 # Check if URL should be followed
-                if not should_follow_url(child_url, self.include_paths, self.exclude_paths):
+                if not should_follow_url(child_url, self.include_paths, self.exclude_paths, self.allowed_domains):
                     continue
                 
                 # Debug: log which URLs will be followed

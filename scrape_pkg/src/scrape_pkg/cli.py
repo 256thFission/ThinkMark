@@ -11,18 +11,18 @@ from scrape_pkg.spiders.docs import DocsSpider
 app = typer.Typer(
     add_completion=False,
     pretty_exceptions_show_locals=False,
-    invoke_without_command=True,
 )
 
 
-@app.callback()
-def run_spider(
-    start_url: str,
-    config_path: Path | None = typer.Argument(None, exists=True),
-    output_dir: Path = typer.Option("output", "--out"),
+@app.command()
+def main(
+    # Use ... for required arguments
+    start_url: str = typer.Argument(..., help="URL to start crawling from"),
+    config_path: Path = typer.Argument(None, exists=True, help="Optional path to config file"),
+    output_dir: Path = typer.Option("output", "--out", help="Directory to save output files"),
 ):
     """
-    Crawl START_URL using CONFIG_PATH and write artefacts to OUTPUT_DIR.
+    Crawl START_URL using CONFIG_PATH and write artifacts to OUTPUT_DIR.
     """
     settings = get_project_settings()
     settings.set("OUTPUT_DIR", str(output_dir))

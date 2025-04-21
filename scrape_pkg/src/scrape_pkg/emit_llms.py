@@ -1,6 +1,6 @@
-# docs_llm_scraper/emit_llms.py
+# scrape_pkg/src/scrape_pkg/emit_llms.py
 """
-Standalone helper:  python -m docs_llm_scraper.emit_llms output_dir
+Standalone helper:  python -m scrape_pkg.emit_llms output_dir
 Reads page_hierarchy.json → writes llms.txt
 """
 import sys
@@ -34,5 +34,5 @@ def main(out_dir: str):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        sys.exit("usage: python -m docs_llm_scraper.emit_llms <output_dir>")
+        sys.exit("usage: python -m scrape_pkg.emit_llms <output_dir>")
     main(sys.argv[1])

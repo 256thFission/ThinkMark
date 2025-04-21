@@ -1,6 +1,6 @@
-# docs_llm_scraper/__init__.py
+# scrape_pkg/src/scrape_pkg/__init__.py
 """
-Docs‑LLM‑Scraper package
+Scrape‑Package package
 """
 __all__ = [
     "settings",

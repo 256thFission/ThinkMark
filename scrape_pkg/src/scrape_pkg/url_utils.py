@@ -1,4 +1,4 @@
-# docs_llm_scraper/utils/url_utils.py
+# scrape_pkg/src/scrape_pkg/utils/url_utils.py
 """
 URL helpers shared by spider & pipelines.
 """

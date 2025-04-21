@@ -1,4 +1,4 @@
-# docs_llm_scraper/items.py
+# scrape_pkg/src/scrape_pkg/items.py
 """
 Scrapy Items.
 """

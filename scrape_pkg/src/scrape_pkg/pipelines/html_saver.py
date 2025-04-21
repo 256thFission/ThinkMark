@@ -1,4 +1,4 @@
-# docs_llm_scraper/pipelines/html_saver.py
+# scrape_pkg/src/scrape_pkg/pipelines/html_saver.py
 """
 Save raw HTML and an append‑only URL→file map.
 """
@@ -6,8 +6,8 @@ from pathlib import Path
 import json
 from datetime import datetime
 
-from docs_llm_scraper.items import PageItem
-from docs_llm_scraper.utils.url_utils import slugify_path
+from scrape_pkg.items import PageItem
+from scrape_pkg.url_utils import slugify_path
 
 
 class HtmlSaverPipeline:
@@ -22,7 +22,7 @@ class HtmlSaverPipeline:
     def open_spider(self, spider):
         self.raw_dir = self.output_dir / "raw_html"
         self.raw_dir.mkdir(parents=True, exist_ok=True)
-        self.map_fp = (self.output_dir / "urls_map.jsonl").open("a", encoding="utf‑8")
+        self.map_fp = (self.output_dir / "urls_map.jsonl").open("a", encoding="utf-8")
 
     def close_spider(self, spider):
         self.map_fp.close()

@@ -1,4 +1,4 @@
-# docs_llm_scraper/link_filters.py
+# scrape_pkg/src/scrape_pkg/link_filters.py
 """
 Reusable URL‑filter helpers.
 """

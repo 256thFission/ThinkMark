@@ -33,17 +33,26 @@ def is_html_doc(url: str) -> bool:
     return any(path.endswith(ext) for ext in ('.html', '/', ''))
 
 
-def should_follow_url(url: str, include_paths: list, exclude_paths: list) -> bool:
+def should_follow_url(url: str, include_paths: list, exclude_paths: list, allowed_domains: list = None) -> bool:
     """
-    Determine if a URL should be followed based on include/exclude paths.
+    Determine if a URL should be followed based on include/exclude paths and allowed domains.
     """
     if not isinstance(url, str):
         url = str(url)
     parsed = urlparse(url)
     path = parsed.path
+    
+    # Check domain restriction if allowed_domains is provided
+    if allowed_domains and parsed.netloc:
+        if not any(parsed.netloc == domain or parsed.netloc.endswith('.' + domain) for domain in allowed_domains):
+            return False
+    
+    # Check exclude paths
     for exclude in exclude_paths:
         if path.startswith(exclude):
             return False
+            
+    # Check include paths
     if include_paths:
         for include in include_paths:
             if path.startswith(include):

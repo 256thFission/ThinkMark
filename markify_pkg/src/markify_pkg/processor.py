@@ -133,7 +133,7 @@ class DocProcessor:
         # De-duplicate content across files
         deduplicated_files = []
         if processed_files:
-            deduplicated_files = self.deduplicator.deduplicate(processed_files)
+            deduplicated_files = self.deduplicator.deduplicate(processed_files, self.output_dir)
         
         # Update page hierarchy with deduplicated files
         new_hierarchy = self.mapper.update_hierarchy(

@@ -12,7 +12,8 @@ class Deduplicator:
         self.similarity_threshold = similarity_threshold
     
     def deduplicate(self, 
-                   processed_files: List[Tuple[Dict[str, Any], Dict[str, Any]]]) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+                   processed_files: List[Tuple[Dict[str, Any], Dict[str, Any]]],
+                   output_dir: Path = None) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
         """Deduplicate content across processed files."""
         # Find exact duplicates using content hashes
         content_hashes = {}
@@ -20,7 +21,16 @@ class Deduplicator:
         
         for orig_entry, new_entry in processed_files:
             try:
-                file_path = Path(new_entry['file'])
+                # Use the full path with output_dir if provided
+                if output_dir:
+                    file_path = output_dir / new_entry['file']
+                else:
+                    file_path = Path(new_entry['file'])
+                
+                if not file_path.exists():
+                    print(f"Warning: File not found: {file_path}")
+                    continue
+                    
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
@@ -45,8 +55,18 @@ class Deduplicator:
         
         # Find near-duplicates using TF-IDF and cosine similarity
         if len(deduplicated) > 1:
-            paths = [Path(entry[1]['file']) for entry in deduplicated]
-            contents = [file_contents[path] for path in paths]
+            # Get paths that exist in file_contents
+            paths = []
+            contents = []
+            for entry in deduplicated:
+                if output_dir:
+                    path = output_dir / entry[1]['file']
+                else:
+                    path = Path(entry[1]['file'])
+                    
+                if path in file_contents:
+                    paths.append(path)
+                    contents.append(file_contents[path])
             
             # Create TF-IDF vectors
             vectorizer = TfidfVectorizer(

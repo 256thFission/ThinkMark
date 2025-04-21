@@ -11,5 +11,6 @@ __pycache__
 *.txt
 *.jsonl
 *.whl
+.env
 output-md/
 llama_docs/

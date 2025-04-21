@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "llm-doc-processor"
+name = "markify-pkg"
 version = "0.1.0"
 description = "Process HTML documentation into LLM-friendly Markdown"
 authors = ["Your Name <your.email@example.com>"]
 
 packages = [
-    { include = "llm_doc_processor", from = "src" }
+    { include = "markify_pkg", from = "src" }
 ]
 
 
@@ -29,4 +29,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-llm-doc-processor = "llm_doc_processor.__main__:main"
+markify-pkg = "markify_pkg.__main__:main"

@@ -1,0 +1,1 @@
+poetry run markify-pkg  /home/dev/ThinkMark/scrape_pkg/llama_docs  ../output-md

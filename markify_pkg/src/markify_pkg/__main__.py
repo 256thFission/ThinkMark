@@ -1,7 +1,7 @@
 import typer
 from pathlib import Path
 from typing import Optional
-from llm_doc_processor.processor import DocProcessor
+from markify_pkg.processor import DocProcessor
 
 app = typer.Typer(help="Process HTML documentation to LLM-friendly Markdown")
 

@@ -4,7 +4,7 @@
   "include_paths": ["/"],
   "exclude_paths": ["/blog", "/changelog"],
   "remove_selectors": ["nav", ".sidebar", ".footer", "header"],
-  "max_depth": 4,
+  "max_depth": 3,
   "chunk": {
     "max_tokens": 2048,
     "overlap": 128

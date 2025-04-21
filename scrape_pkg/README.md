@@ -1,68 +1,148 @@
-# scrape-pkg
+# Scrape Pkg
 
-A Scrapy-powered, Typer-based CLI tool for crawling technical documentation sites and emitting LLM-ready data packages.
+A powerful Scrapy-based web crawler that extracts documentation from websites and prepares them for LLM ingestion.
+
+## Overview
+
+Scrape Pkg intelligently crawls documentation websites, extracting content while preserving the hierarchical structure. It produces files that can be directly processed by the Markify package to generate LLM-friendly content.
 
 ## Features
 
-- **CLI-first**: Run with a single command using Poetry or as a standalone script.
-- **Configurable**: Supports custom config files for crawl behavior.
-- **Focused crawling**: Uses smart link extraction and filtering to only fetch relevant documentation pages.
-- **Extensible**: Built on Scrapy, easily customizable for your own documentation needs.
-- **Output**: Scrapes and saves documentation content for downstream LLM or NLP tasks.
+- **Smart Crawling**: Automatically detects and focuses on documentation content
+- **Hierarchical Structure**: Maintains parent-child page relationships
+- **Configurable Depth**: Controls how deep the crawler goes into the site
+- **Domain & Path Filtering**: Restrict crawling to specific domains and paths
+- **URL Normalization**: Handles various URL formats consistently
+- **Output Structure**: Produces a standardized output format for downstream processing
 
 ## Installation
 
-```sh
+```bash
+# Using Poetry
 cd scrape_pkg
 poetry install
+
+# Or with pip
+pip install -e scrape_pkg/
 ```
 
-## Usage
+## CLI Usage
 
-### Basic Command
+### Basic Crawling
 
-```sh
-poetry run scrape-docs <START_URL> [CONFIG_PATH] --out <OUTPUT_DIR>
+```bash
+# Basic usage
+poetry run scrape-docs URL [CONFIG_FILE] [OPTIONS]
+
+# Example
+poetry run scrape-docs https://docs.example.com/
+
+# With custom config file
+poetry run scrape-docs https://docs.example.com/ my-config.json
+
+# With custom output directory
+poetry run scrape-docs https://docs.example.com/ --out custom-output
 ```
 
-- `<START_URL>`: The root URL to begin crawling (e.g., `https://docs.python.org/3/`).
-- `[CONFIG_PATH]`: (Optional) Path to a YAML or TOML config file specifying crawl rules.
-- `--out <OUTPUT_DIR>`: (Optional) Directory to save output files (default: `output`).
+### Parameters
 
-### Example
+- `URL`: Required. The starting URL to begin crawling from
+- `CONFIG_FILE`: Optional. Path to JSON configuration file
+- `--out OUTPUT_DIR`: Optional. Directory to save output files (default: "output")
 
-```sh
-poetry run scrape-docs https://docs.python.org/3/
+### Generating LLM Format
+
+```bash
+# Generate LLM-friendly format
+poetry run emit-llms OUTPUT_DIR
+
+# Example
+poetry run emit-llms output
 ```
-
-### Help
-
-```sh
-poetry run scrape-docs --help
-```
-
-## Project Structure
-
-- `src/scrape_pkg/cli.py`: Typer-based CLI entry point.
-- `src/scrape_pkg/spiders/docs.py`: The main Scrapy spider for crawling docs.
-- `src/scrape_pkg/spiders/__init__.py`: (empty/init file, required for Python package structure)
 
 ## Configuration
 
-You can provide a config file to customize:
-- Allowed domains
-- Include/exclude URL patterns
-- Crawl depth
-- Other Scrapy settings
+Create a JSON file with the following settings:
 
-See `scrape_pkg/config.py` for available options.
+```json
+{
+  "allowed_domains": ["docs.example.com"],
+  "include_paths": ["/reference", "/tutorials"],
+  "exclude_paths": ["/blog", "/changelog"],
+  "max_depth": 3
+}
+```
 
-## Development
+### Configuration Options
 
-- Requires Python 3.12+
-- Install dependencies with Poetry
-- Test with: `poetry run pytest`
+- `allowed_domains`: List of domains the crawler is allowed to visit
+- `include_paths`: List of path prefixes to include (if empty, includes all)
+- `exclude_paths`: List of path prefixes to exclude
+- `max_depth`: Maximum crawl depth (default: 3)
 
-## License
+If no configuration file is provided, the tool will automatically generate sensible defaults based on the starting URL.
 
-MIT
+## Python API Usage
+
+```python
+from scrape_pkg.config import Config
+from scrape_pkg.spiders.docs import DocsSpider
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
+
+# Create configuration
+config = Config.from_start_url("https://docs.example.com/")
+# or
+config = Config.from_file("config.json")
+
+# Setup crawler 
+settings = get_project_settings()
+settings.set("OUTPUT_DIR", "output")
+process = CrawlerProcess(settings)
+
+# Start crawl
+process.crawl(DocsSpider, start_url="https://docs.example.com/")
+process.start()
+```
+
+## Output Structure
+
+The crawler generates the following files:
+
+- `OUTPUT_DIR/raw_html/`: Directory containing raw HTML files
+- `OUTPUT_DIR/urls_map.jsonl`: Mapping between URLs and file paths
+- `OUTPUT_DIR/page_hierarchy.json`: Hierarchical structure of pages
+- `OUTPUT_DIR/llms.txt`: LLM-friendly format (when using emit-llms)
+
+## URLs Map Format (JSONL)
+
+Each line contains a JSON object with:
+```json
+{"url": "https://docs.example.com/page", "file": "path/to/saved/file.html", "title": "Page Title"}
+```
+
+## Page Hierarchy Format (JSON)
+
+```json
+{
+  "url": "https://docs.example.com/",
+  "file": "index.html",
+  "title": "Documentation",
+  "children": [
+    {
+      "url": "https://docs.example.com/section",
+      "file": "section.html",
+      "title": "Section",
+      "children": []
+    }
+  ]
+}
+```
+
+## Requirements
+
+- Python 3.12 or higher
+- Dependencies (automatically installed):
+  - scrapy
+  - python-slugify
+  - typer

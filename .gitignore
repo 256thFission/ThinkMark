@@ -6,3 +6,10 @@ docs_llm_scraper/exporter/__pycache__/package_exporter.cpython-312.pyc
 docs_llm_scraper/logs/bad_urls.txt
 *.pyc
 __pycache__
+*.html
+<typer.models.OptionInfo object at 0x7f9cdb8ed400>/llms.txt
+*.txt
+*.jsonl
+*.whl
+output-md/
+llama_docs/

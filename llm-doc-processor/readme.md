@@ -1,0 +1,1 @@
+poetry run llm-doc-processor  /home/dev/ThinkMark/scrape_pkg/llama_docs  ../output-md

@@ -1,84 +1,91 @@
-# ThinkMark: Doc links into LLM Friendly Markdown
+# 🧠 ThinkMark: Documentation to LLM-Friendly Markdown
 
 **Turn any documentation website into an interactive AI assistant in minutes.**
 
-ThinkMark is a powerful tool that creates intelligent chatbots from technical documentation. No more endless scrolling through docs - just ask questions in natural language and get precise answers.
+ThinkMark is a modular pipeline that crawls, cleans, converts, and annotates documentation websites, producing LLM-ready Markdown and summaries for RAG and chatbot use.
 
-## What It Does
+## Features
+- **Scrape**: Crawl documentation sites to extract HTML and build a page hierarchy
+- **Markify**: Convert HTML to clean Markdown, deduplicate, and map to hierarchy
+- **Annotate**: Use LLMs to summarize and annotate Markdown docs
+- **Unified CLI**: Run any stage or the full pipeline from a single command
 
-1. **Crawls documentation websites** to extract all content
-2. **Processes content** into clean, structured Markdown
-3. **Generates a RAG-ready package** for semantic search
-4. **Creates an interactive chatbot** that answers questions about the docs
+---
 
-## Why It's Useful
-
-- **Save developer time**: No more hunting through pages of documentation
-- **Improve onboarding**: New team members can ask questions naturally
-- **Maintain context**: The chatbot references exactly where information comes from
-- **Work offline**: Once crawled, the documentation is available without internet
-- **Handle massive docs**: Even the largest docs are organized for quick retrieval
-
-## How It Works
-
-ThinkMark uses a 2-stage pipeline:
-
-### 1. Crawling & Processing
-- Uses **Scrapy** to crawl documentation sites
-- Cleans HTML with **BeautifulSoup4**
-- Converts content to Markdown
-- Removes navigation, ads, and other non-content elements
-- Chunks content optimally for RAG (Retrieval Augmented Generation)
-- Creates a **standardized llms.txt package** compatible with LLM tooling
-
-### 2. AI Assistant Creation
-- Utilizes **LlamaStack** for RAG capabilities
-- Embeds documents using **BAAI/bge vector models**
-- Stores vectors in an in-memory **FAISS database**
-- Connects to LLMs (**Llama-3**, **GPT-4**, etc.) via APIs
-- Provides beautiful terminal UI with **Rich** library
-- Features animated loading indicators and formatted responses
-
-## Quick Start
+## Installation
 
 ```bash
-# Install
+# Install dependencies
 poetry install
-
-# Crawl documentation
-docs-llm-scraper crawl https://docs.example.com/
-
-# Chat with the documentation
-docs-llm-scraper chat
 ```
 
-## Key Features
+## CLI Usage
 
-- **Beautiful terminal UI** with animations and code highlighting
-- **Highly customizable crawler** with domain/path filtering
-- **Support for various LLM providers** (Fireworks, OpenAI, Ollama)
-- **Advanced embedding models** for superior semantic search
-- **Conforms to the llms.txt standard** for LLM ingestion
-- **Fully local processing** with optional remote LLMs
-- **Extensive error handling** for robust operation
-- **Embedded vector DB** requiring no external setup
+All CLI commands are available via the main entry point:
 
-## Technologies Used
+```bash
+poetry run thinkmark [COMMAND] [OPTIONS]
+```
 
-- **Python 3.11+** with type annotations
-- **Scrapy** for web crawling
-- **BeautifulSoup4** for HTML cleaning
-- **LlamaStack** for RAG pipelines
-- **FAISS** for vector database
-- **BAAI/bge** embedding models
-- **Rich** for terminal UI
-- **Typer** for CLI interface
-- **Various LLMs** via API connections
+### Pipeline Command (Full Workflow)
+Run the full process (scrape → markify → annotate) in one step:
+```bash
+poetry run thinkmark pipeline URL [--output OUTPUT_DIR] [--config CONFIG_FILE]
+```
+- `URL`: Root documentation URL to start crawling
+- `--output/-o`: Output directory (default: `output/`)
+- `--config/-c`: Optional config file
+
+### Scrape Only
+Crawl docs and save HTML, URLs map, and hierarchy:
+```bash
+poetry run thinkmark scrape docs URL [--output OUTPUT_DIR] [--config CONFIG_FILE]
+```
+- Outputs: `raw_html/`, `urls_map.jsonl`, `page_hierarchy.json`
+
+### Markify Only
+Convert HTML to Markdown:
+```bash
+poetry run thinkmark markify html INPUT_HTML_DIR [--output OUTPUT_DIR] [--urls-map URLS_MAP_PATH] [--hierarchy HIERARCHY_PATH]
+```
+- Inputs: HTML directory (from scrape), URLs map, hierarchy
+- Outputs: Markdown directory
+
+### Annotate Only
+Summarize/annotate Markdown with LLMs:
+```bash
+poetry run thinkmark annotate summarize INPUT_MD_DIR [--output OUTPUT_DIR] [--urls-map URLS_MAP_PATH] [--hierarchy HIERARCHY_PATH] [--api-key OPENROUTER_API_KEY]
+```
+- Inputs: Markdown directory, URLs map, hierarchy
+- Outputs: Annotated Markdown directory
+- API key can be set via `--api-key` or `OPENROUTER_API_KEY` env var
+
+---
+
+## Environment Variables
+- `OPENROUTER_API_KEY`: Required for annotation (LLM) step
+
+## Example Workflow
+```bash
+# 1. Scrape docs
+poetry run thinkmark scrape docs https://docs.example.com/ -o output
+
+# 2. Convert HTML to Markdown
+poetry run thinkmark markify html output/raw_html -o output/markdown --urls-map output/urls_map.jsonl --hierarchy output/page_hierarchy.json
+
+# 3. Annotate Markdown with LLM
+poetry run thinkmark annotate summarize output/markdown -o output/annotated --urls-map output/urls_map.jsonl --hierarchy output/page_hierarchy.json
+
+# 4. Or run everything at once
+poetry run thinkmark pipeline https://docs.example.com/ -o output
+```
 
 ## Advanced Configuration
-
-See our [detailed documentation](https://github.com/yourusername/ThinkMark/wiki) for advanced configuration options.
+See [Wiki](https://github.com/yourusername/ThinkMark/wiki) for custom config, filtering, and pipeline options.
 
 ## License
-
 MIT
+
+---
+
+_ThinkMark: From docs to chatbot, in minutes._

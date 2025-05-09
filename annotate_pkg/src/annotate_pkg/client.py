@@ -37,7 +37,7 @@ class LLMClient:
         """Summarize a markdown object via OpenRouter."""
         model_to_use = model or self.model
         messages = [{"role": "system",
-         "content": "Describe this doccumentation page in 1-2 sentance summary for an index. If it does not contain useful information for a developer agent, respond with FAIL."},
+         "content": "Describe this doccumentation page in 1-2 sentance summary for an index. If it does not contain useful information for a developer agent, respond with 'FAIL'."},
                     {"role": "user", "content": markdown_object}]
         return self.client.chat.completions.create(
             messages=messages,

@@ -11,5 +11,11 @@ __pycache__
 *.txt
 *.whl
 .env
+*.md
 output-md/raw_html
 llama_docs/
+**/.claude/settings.local.json
+page_info.json
+parent_map.json
+urls_map.jsonl
+page_hierarchy.json

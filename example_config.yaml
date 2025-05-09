@@ -1,0 +1,45 @@
+# ThinkMark Example Configuration File
+# Save this as example_config.yaml and pass with --config example_config.yaml
+
+# Root URL to start scraping (can be overridden by CLI argument)
+root_url: "https://docs.example.com/"
+
+# Scraper options
+scrape:
+  allowed_domains:
+    - "docs.example.com"
+  deny_patterns:
+    - "/private/"
+    - "/admin/"
+  max_depth: 3
+  user_agent: "ThinkMarkBot/1.0"
+  delay: 0.5  # seconds between requests
+
+# Markify options
+markify:
+  remove_selectors:
+    - ".sidebar"
+    - ".nav"
+    - ".footer"
+  code_block_languages:
+    - "python"
+    - "bash"
+    - "json"
+
+# Annotate options
+annotate:
+  llm_model: "openrouter/gpt-4"
+  summary_prompt: "Summarize this documentation section for a developer."
+  chunk_size: 1200
+  overlap: 200
+
+# Output directories (relative to --output or current working directory)
+output:
+  raw_html: "raw_html"
+  markdown: "markdown"
+  annotated: "annotated"
+
+# Logging
+logging:
+  level: "INFO"
+  log_file: "thinkmark.log"

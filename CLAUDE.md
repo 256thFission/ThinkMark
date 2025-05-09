@@ -4,7 +4,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build/Test/Lint Commands
 - Install dependencies: `poetry install`
-- Run CLI tool: `poetry run docs-llm-scraper [OPTIONS] URL`
 - Run all tests: `poetry run pytest`
 - Run single test: `poetry run pytest tests/path/to/test.py`
 - Run linter: `poetry run ruff check .`
@@ -16,6 +15,5 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Imports order: stdlib → third-party → local modules
 - Naming: snake_case for functions, PascalCase for classes
 - Error handling: Use logging.{debug|info|warning|error}
-- Non-200 HTTP responses: Log to logs/bad_urls.txt and skip
 - Unhandled exceptions: Write to logs/crash.log, exit non-zero
 - Use docstrings for all classes and functions

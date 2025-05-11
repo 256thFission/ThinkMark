@@ -21,33 +21,50 @@ class HierarchyPipeline:
         parent_map_path = self.output_dir / "parent_map.json"
         page_info_path = self.output_dir / "page_info.json"
         
-        # Try to load parent_map and page_info from files
-        parent_map = {}
-        page_info = {}
+        # First try to get parent_map and page_info directly from spider object
+        # This is crucial when starting from scratch where files won't exist yet
+        parent_map = getattr(spider, 'parent_map', {})
+        page_info = getattr(spider, 'page_info', {})
         
-        # Read parent_map from file
-        if parent_map_path.exists():
+        # If the spider attributes are empty, try to load from files as fallback
+        if not parent_map and parent_map_path.exists():
             try:
                 with open(parent_map_path, 'r', encoding='utf-8') as f:
                     parent_map = json.load(f)
                 spider.logger.info(f"[ThinkMark] Loaded parent map from file with {len(parent_map)} relationships")
             except Exception as e:
                 spider.logger.error(f"[ThinkMark] Error loading parent map: {str(e)}")
-        else:
-            spider.logger.warning(f"[ThinkMark] Parent map file not found at {parent_map_path}")
-            parent_map = getattr(spider, 'parent_map', {})
         
-        # Read page_info from file
-        if page_info_path.exists():
+        if not page_info and page_info_path.exists():
             try:
                 with open(page_info_path, 'r', encoding='utf-8') as f:
                     page_info = json.load(f)
                 spider.logger.info(f"[ThinkMark] Loaded page info from file with {len(page_info)} pages")
             except Exception as e:
                 spider.logger.error(f"[ThinkMark] Error loading page info: {str(e)}")
-        else:
-            spider.logger.warning(f"[ThinkMark] Page info file not found at {page_info_path}")
-            page_info = getattr(spider, 'page_info', {})
+                
+        spider.logger.info(f"[ThinkMark] Working with {len(parent_map)} parent-child relationships and {len(page_info)} pages")
+            
+        # Extra debugging for root URL detection
+        child_urls = set(parent_map.keys())
+        potential_roots = [url for url in page_info.keys() if url not in child_urls]
+        spider.logger.info(f"[ThinkMark] Found {len(potential_roots)} potential root URLs")
+        
+        # If no roots found from structure but we have page_info, manually add a root
+        if not potential_roots and page_info:
+            # Find URL that is most referred to as parent - it's likely the root
+            parent_counts = {}
+            for parent in parent_map.values():
+                parent_counts[parent] = parent_counts.get(parent, 0) + 1
+            
+            # Get most common parent or first URL in page_info
+            if parent_counts:
+                most_common_parent = max(parent_counts.items(), key=lambda x: x[1])[0]
+                if most_common_parent in page_info:
+                    spider.logger.info(f"[ThinkMark] Using most common parent as root: {most_common_parent}")
+                    # Remove this URL from being a child to make it a root
+                    if most_common_parent in parent_map:
+                        del parent_map[most_common_parent]
         
         # Debug logging
         spider.logger.info(f"[ThinkMark] Building hierarchy from {len(parent_map)} parent-child relationships")
@@ -91,6 +108,8 @@ class HierarchyPipeline:
                 json.dump([], f)
             return
         
+        # Debug the hierarchy
+        spider.logger.info(f"[ThinkMark] Built hierarchy with structure: {page_hierarchy if page_hierarchy else 'empty'}")
         
         # Save hierarchy to JSON file
         with open(hierarchy_path, "w", encoding="utf-8") as f:

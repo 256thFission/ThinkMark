@@ -96,7 +96,7 @@ class HtmlSaverPipeline:
         # Log completion message
         spider.logger.info(f"[ThinkMark] Saved metadata: {len(self.parent_map)} parent-child relations, {len(self.page_info)} pages")
         
-        # Always set these attributes, even if empty
-        spider.urls_map = getattr(self, 'urls_map', [])
-        spider.page_info = getattr(self, 'page_info', {})
-        spider.parent_map = getattr(self, 'parent_map', {})
+        # Always set these attributes on the spider object FIRST to ensure they're available to other pipelines
+        spider.urls_map = self.urls_map
+        spider.page_info = self.page_info
+        spider.parent_map = self.parent_map

@@ -23,7 +23,7 @@ class DocsSpider(scrapy.Spider):
     custom_settings = {
         "ITEM_PIPELINES": {
             "thinkmark.scrape.pipelines.html_saver.HtmlSaverPipeline": 100,
-            "thinkmark.scrape.pipelines.hierarchy.HierarchyPipeline": 200,
+            "thinkmark.scrape.pipelines.hierarchy.HierarchyPipeline": 900,  # Higher number ensures this runs after HtmlSaver
         }
     }
 

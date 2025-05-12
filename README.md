@@ -80,11 +80,62 @@ poetry run thinkmark annotate summarize output/markdown -o output/annotated --ur
 poetry run thinkmark pipeline https://docs.example.com/ -o output
 ```
 
+## MCP Server
+
+ThinkMark can run as a Model Context Protocol (MCP) server, exposing its pipeline as tools accessible via LLMs and other clients that support the MCP standard.
+
+### Running the MCP Server
+
+```bash
+# Run with stdio transport (for LLM plugins)
+poetry run thinkmark mcp stdio [--log-level LOG_LEVEL] [--config CONFIG_FILE]
+
+# Run with HTTP transport (for web clients)
+poetry run thinkmark mcp http [--host HOST] [--port PORT] [--log-level LOG_LEVEL] [--config CONFIG_FILE]
+```
+
+### Available MCP Tools
+
+When running as an MCP server, ThinkMark exposes these tools:
+
+- `scrape`: Scrape documentation from a website
+- `markify`: Convert HTML documentation to Markdown
+- `annotate`: Annotate Markdown documentation with LLM
+- `pipeline`: Run the complete documentation pipeline
+
+### Available MCP Resources
+
+- `resource://config_example`: Example configuration file
+- `resource://readme`: ThinkMark README file
+- `resource://hierarchy_template`: Example hierarchy JSON template
+- `resource://urls_map_template`: Example URLs map template
+
+### Usage with LLMs
+
+ThinkMark's MCP server uses FastMCP, making it compatible with any LLM or application that supports the Model Context Protocol. To connect:
+
+1. Start the MCP server: `poetry run thinkmark mcp stdio`
+2. Connect your LLM or application to the server
+3. The LLM can discover and use ThinkMark's tools and resources
+
 ## Advanced Configuration
 See [Wiki](https://github.com/yourusername/ThinkMark/wiki) for custom config, filtering, and pipeline options.
 
 ## License
 MIT
+
+
+
+EX:
+# Scrape the Llama Stack docs (outputs to ./output by default)
+poetry run thinkmark scrape docs https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
+
+# Convert the scraped HTML to Markdown
+poetry run thinkmark markify html llama_docs/raw_html --output llama_docs/markdown --urls-map llama_docs/urls_map.jsonl --hierarchy llama_docs/page_hierarchy.json
+
+# Or run the Full Pipeline
+poetry run thinkmark pipeline https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
+
 
 ---
 

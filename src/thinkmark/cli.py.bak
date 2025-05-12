@@ -10,13 +10,6 @@ from thinkmark.markify.cli import app as markify_app
 from thinkmark.annotate.cli import app as annotate_app
 from thinkmark.utils.config import get_config
 
-# Import MCP CLI if available
-try:
-    from thinkmark.mcp.fast_cli import app as mcp_app
-    has_mcp = True
-except ImportError:
-    has_mcp = False
-
 app = typer.Typer(help="ThinkMark - Documentation to LLM pipeline")
 console = Console()
 
@@ -24,10 +17,6 @@ console = Console()
 app.add_typer(scrape_app, name="scrape", help="Scrape documentation websites")
 app.add_typer(markify_app, name="markify", help="Convert HTML to Markdown")
 app.add_typer(annotate_app, name="annotate", help="Annotate documentation with LLM")
-
-# Add MCP server commands if available
-if has_mcp:
-    app.add_typer(mcp_app, name="mcp", help="Run ThinkMark as an MCP server")
 
 @app.callback()
 def main():

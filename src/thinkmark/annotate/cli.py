@@ -38,3 +38,31 @@ def summarize_docs(
     result = annotate_docs(input_dir, output_dir, urls_map_path, hierarchy_path, api_key)
 
     console.print(f"[green]Annotated {result['count']} pages to {output_dir}[/]")
+def generate_manifest(
+    input_dir: Path = typer.Argument(..., help="Input directory with Markdown files"),
+    output_dir: Path = typer.Option(
+        Path("output/annotated"), "--output", "-o", help="Output directory for annotated files"
+    ),
+    urls_map_path: Optional[Path] = typer.Option(
+        None, "--urls-map", help="Path to URLs map JSONL file"
+    ),
+    hierarchy_path: Optional[Path] = typer.Option(
+        None, "--hierarchy", help="Path to page hierarchy JSON file"
+    ),
+    api_key: Optional[str] = typer.Option(
+        None, "--api-key", envvar="OPENROUTER_API_KEY", help="OpenRouter API key"
+    ),
+):
+    """Generate a manifest for the annotated documentation."""
+    from thinkmark.annotate.client import generate_manifest
+    if not urls_map_path:
+        urls_map_path = input_dir.parent / "urls_map.jsonl"
+    if not hierarchy_path:
+        hierarchy_path = input_dir.parent / "page_hierarchy.json"
+
+    console.print(f"[bold]Generating manifest for {input_dir}[/]")
+
+    result = generate_manifest(input_dir, output_dir, urls_map_path, hierarchy_path, api_key)
+
+    console.print(f"[green]Generated manifest to {output_dir}[/]")
+

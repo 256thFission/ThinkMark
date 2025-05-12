@@ -45,7 +45,7 @@ def crawl_docs(
             'Accept': 'text/html,application/xhtml+xml',
             'Accept-Language': 'en',
         },
-        'LOG_LEVEL': 'INFO',
+        'LOG_LEVEL': 'WARNING',
         'OUTPUT_DIR': str(output_dir),
     })
     

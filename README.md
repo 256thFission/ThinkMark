@@ -14,23 +14,37 @@ ThinkMark is a modular pipeline that crawls, cleans, converts, and annotates doc
 
 ## Installation
 
+ThinkMark now uses [UV](https://github.com/astral-sh/uv) for dependency management (instead of Poetry).
+
 ```bash
+# Create a virtual environment (recommended)
+uv venv
+source .venv/bin/activate
+
 # Install dependencies
-poetry install
+uv pip install -r requirements.txt
+# Or, for development/editable mode:
+uv pip install -e .
 ```
+
+If you don't have UV, install it via pipx:
+```bash
+pipx install uv
+```
+
 
 ## CLI Usage
 
 All CLI commands are available via the main entry point:
 
 ```bash
-poetry run thinkmark [COMMAND] [OPTIONS]
+ [COMMAND] [OPTIONS]
 ```
 
 ### Pipeline Command (Full Workflow)
 Run the full process (scrape → markify → annotate) in one step:
 ```bash
-poetry run thinkmark pipeline URL [--output OUTPUT_DIR] [--config CONFIG_FILE]
+ pipeline URL [--output OUTPUT_DIR] [--config CONFIG_FILE]
 ```
 - `URL`: Root documentation URL to start crawling
 - `--output/-o`: Output directory (default: `output/`)
@@ -39,14 +53,14 @@ poetry run thinkmark pipeline URL [--output OUTPUT_DIR] [--config CONFIG_FILE]
 ### Scrape Only
 Crawl docs and save HTML, URLs map, and hierarchy:
 ```bash
-poetry run thinkmark scrape docs URL [--output OUTPUT_DIR] [--config CONFIG_FILE]
+ scrape docs URL [--output OUTPUT_DIR] [--config CONFIG_FILE]
 ```
 - Outputs: `raw_html/`, `urls_map.jsonl`, `page_hierarchy.json`
 
 ### Markify Only
 Convert HTML to Markdown:
 ```bash
-poetry run thinkmark markify html INPUT_HTML_DIR [--output OUTPUT_DIR] [--urls-map URLS_MAP_PATH] [--hierarchy HIERARCHY_PATH]
+ markify html INPUT_HTML_DIR [--output OUTPUT_DIR] [--urls-map URLS_MAP_PATH] [--hierarchy HIERARCHY_PATH]
 ```
 - Inputs: HTML directory (from scrape), URLs map, hierarchy
 - Outputs: Markdown directory
@@ -54,7 +68,7 @@ poetry run thinkmark markify html INPUT_HTML_DIR [--output OUTPUT_DIR] [--urls-m
 ### Annotate Only
 Summarize/annotate Markdown with LLMs:
 ```bash
-poetry run thinkmark annotate summarize INPUT_MD_DIR [--output OUTPUT_DIR] [--urls-map URLS_MAP_PATH] [--hierarchy HIERARCHY_PATH] [--api-key OPENROUTER_API_KEY]
+ annotate summarize INPUT_MD_DIR [--output OUTPUT_DIR] [--urls-map URLS_MAP_PATH] [--hierarchy HIERARCHY_PATH] [--api-key OPENROUTER_API_KEY]
 ```
 - Inputs: Markdown directory, URLs map, hierarchy
 - Outputs: Annotated Markdown directory
@@ -68,16 +82,16 @@ poetry run thinkmark annotate summarize INPUT_MD_DIR [--output OUTPUT_DIR] [--ur
 ## Example Workflow
 ```bash
 # 1. Scrape docs
-poetry run thinkmark scrape docs https://docs.example.com/ -o output
+ scrape docs https://docs.example.com/ -o output
 
 # 2. Convert HTML to Markdown
-poetry run thinkmark markify html output/raw_html -o output/markdown --urls-map output/urls_map.jsonl --hierarchy output/page_hierarchy.json
+ markify html output/raw_html -o output/markdown --urls-map output/urls_map.jsonl --hierarchy output/page_hierarchy.json
 
 # 3. Annotate Markdown with LLM
-poetry run thinkmark annotate summarize output/markdown -o output/annotated --urls-map output/urls_map.jsonl --hierarchy output/page_hierarchy.json
+ annotate summarize output/markdown -o output/annotated --urls-map output/urls_map.jsonl --hierarchy output/page_hierarchy.json
 
 # 4. Or run everything at once
-poetry run thinkmark pipeline https://docs.example.com/ -o output
+ pipeline https://docs.example.com/ -o output
 ```
 
 ## MCP Server
@@ -88,10 +102,10 @@ ThinkMark can run as a Model Context Protocol (MCP) server, exposing its pipelin
 
 ```bash
 # Run with stdio transport (for LLM plugins)
-poetry run thinkmark mcp stdio [--log-level LOG_LEVEL] [--config CONFIG_FILE]
+ mcp stdio [--log-level LOG_LEVEL] [--config CONFIG_FILE]
 
 # Run with HTTP transport (for web clients)
-poetry run thinkmark mcp http [--host HOST] [--port PORT] [--log-level LOG_LEVEL] [--config CONFIG_FILE]
+ mcp http [--host HOST] [--port PORT] [--log-level LOG_LEVEL] [--config CONFIG_FILE]
 ```
 
 ### Available MCP Tools
@@ -114,7 +128,7 @@ When running as an MCP server, ThinkMark exposes these tools:
 
 ThinkMark's MCP server uses FastMCP, making it compatible with any LLM or application that supports the Model Context Protocol. To connect:
 
-1. Start the MCP server: `poetry run thinkmark mcp stdio`
+1. Start the MCP server: ` mcp stdio`
 2. Connect your LLM or application to the server
 3. The LLM can discover and use ThinkMark's tools and resources
 
@@ -126,16 +140,30 @@ MIT
 
 
 
-EX:
+## Examples
+
+You must run ThinkMark commands via the CLI entry point, not as direct shell commands. Here are two recommended ways:
+
+### If using a virtual environment (recommended):
+
+```bash
 # Scrape the Llama Stack docs (outputs to ./output by default)
-poetry run thinkmark scrape docs https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
+.venv/bin/thinkmark scrape docs https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
 
 # Convert the scraped HTML to Markdown
-poetry run thinkmark markify html llama_docs/raw_html --output llama_docs/markdown --urls-map llama_docs/urls_map.jsonl --hierarchy llama_docs/page_hierarchy.json
+.venv/bin/thinkmark markify html llama_docs/raw_html --output llama_docs/markdown --urls-map llama_docs/urls_map.jsonl --hierarchy llama_docs/page_hierarchy.json
 
 # Or run the Full Pipeline
-poetry run thinkmark pipeline https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
+.venv/bin/thinkmark pipeline https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
+```
 
+### Or, without a venv, using UV + pipx:
+
+```bash
+uv pipx run thinkmark scrape docs https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
+uv pipx run thinkmark markify html llama_docs/raw_html --output llama_docs/markdown --urls-map llama_docs/urls_map.jsonl --hierarchy llama_docs/page_hierarchy.json
+uv pipx run thinkmark pipeline https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
+```
 
 ---
 

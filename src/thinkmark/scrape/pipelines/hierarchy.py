@@ -109,7 +109,11 @@ class HierarchyPipeline:
             return
         
         # Debug the hierarchy
-        spider.logger.info(f"[ThinkMark] Built hierarchy with structure: {page_hierarchy if page_hierarchy else 'empty'}")
+        if page_hierarchy and isinstance(page_hierarchy, dict):
+            summary = f"root: {page_hierarchy.get('title', 'N/A')}, children: {len(page_hierarchy.get('children', []))}"
+        else:
+            summary = 'empty'
+        spider.logger.info(f"[ThinkMark] Built hierarchy summary: {summary}")
         
         # Save hierarchy to JSON file
         with open(hierarchy_path, "w", encoding="utf-8") as f:

@@ -142,27 +142,32 @@ MIT
 
 ## Examples
 
-You must run ThinkMark commands via the CLI entry point, not as direct shell commands. Here are two recommended ways:
+You must run ThinkMark commands via the CLI entry point.
 
 ### If using a virtual environment (recommended):
 
 ```bash
-# Scrape the Llama Stack docs (outputs to ./output by default)
+# 1. Initialize ThinkMark (required once)
+.venv/bin/thinkmark init
+
+# 2. Ingest the Llama Stack docs (full pipeline: scrape → markify → annotate)
+.venv/bin/thinkmark ingest https://llama-stack.readthedocs.io/en/latest/ --api-key <YOUR_OPENROUTER_API_KEY>
+
+# 3. Or, run each stage manually:
 .venv/bin/thinkmark scrape docs https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
-
-# Convert the scraped HTML to Markdown
 .venv/bin/thinkmark markify html llama_docs/raw_html --output llama_docs/markdown --urls-map llama_docs/urls_map.jsonl --hierarchy llama_docs/page_hierarchy.json
-
-# Or run the Full Pipeline
-.venv/bin/thinkmark pipeline https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
+.venv/bin/thinkmark annotate summarize llama_docs/markdown --output llama_docs/annotated --urls-map llama_docs/urls_map.jsonl --hierarchy llama_docs/page_hierarchy.json --api-key <YOUR_OPENROUTER_API_KEY>
 ```
 
 ### Or, without a venv, using UV + pipx:
 
 ```bash
+uv pipx run thinkmark init
+uv pipx run thinkmark ingest https://llama-stack.readthedocs.io/en/latest/ --api-key <YOUR_OPENROUTER_API_KEY>
+# Or, run each stage manually:
 uv pipx run thinkmark scrape docs https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
 uv pipx run thinkmark markify html llama_docs/raw_html --output llama_docs/markdown --urls-map llama_docs/urls_map.jsonl --hierarchy llama_docs/page_hierarchy.json
-uv pipx run thinkmark pipeline https://llama-stack.readthedocs.io/en/latest/ --output llama_docs
+uv pipx run thinkmark annotate summarize llama_docs/markdown --output llama_docs/annotated --urls-map llama_docs/urls_map.jsonl --hierarchy llama_docs/page_hierarchy.json --api-key <YOUR_OPENROUTER_API_KEY>
 ```
 
 ---

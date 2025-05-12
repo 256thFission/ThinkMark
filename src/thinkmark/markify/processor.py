@@ -58,42 +58,40 @@ def process_docs(
     else:
         hierarchy = hierarchy_path
     
+    # Import the same URL-to-filename function that the scraper uses
+    from thinkmark.utils.url import url_to_filename
+    
     # Process each file in the URLs map
     processed_files = []
     new_urls_map = []
     
     for entry in tqdm(urls_map, desc="Converting HTML to Markdown"):
         try:
-            # Get HTML file path from entry
-            html_file = entry.get('file', '')
-            if not html_file:
-                print(f"Warning: Missing file path in entry: {entry}")
+            # Get URL from entry - this is the key field we need
+            url = entry.get('url', '')
+            if not url:
+                print(f"Warning: Missing URL in entry: {entry}")
                 continue
             
-            # The file path in urls_map should be the HTML file
-            # Make sure it has the right extension
-            if not html_file.endswith('.html'):
-                html_file = html_file.replace('.md', '.html')
-                if not html_file.endswith('.html'):
-                    html_file = f"{html_file}.html"
-            
-            # Handle case where file path already includes a directory prefix
-            # that might conflict with input_dir
-            if html_file.startswith('raw_html/') and str(input_dir).endswith('/raw_html'):
-                # Remove the 'raw_html/' prefix to avoid duplication
-                html_file = html_file.replace('raw_html/', '', 1)
+            # Generate the exact same filename that the scraper would have used
+            # This ensures consistency between scrape and markify stages
+            html_filename = url_to_filename(url)
             
             # Full path to the input HTML file
-            html_path = input_dir / html_file
+            html_path = input_dir / html_filename
             
             # Check if file exists
             if not html_path.exists():
                 # Try alternative paths if the file doesn't exist
-                alt_path = Path(str(input_dir).rstrip('/raw_html')) / html_file
-                if alt_path.exists():
-                    html_path = alt_path
+                alt_path_1 = Path(str(input_dir).rstrip('/raw_html')) / html_filename
+                alt_path_2 = input_dir / entry.get('file', '')
+                
+                if alt_path_1.exists():
+                    html_path = alt_path_1
+                elif alt_path_2.exists() and entry.get('file'):
+                    html_path = alt_path_2
                 else:
-                    print(f"Error processing {html_file}: File not found at {html_path}")
+                    print(f"Error processing {url}: File not found at {html_path}")
                     continue
             
             # Read HTML content
@@ -113,7 +111,7 @@ def process_docs(
             markdown_content = deduplicator.deduplicate_sections(markdown_content)
             
             # Create output path - maintain directory structure but use .md extension
-            md_file = Path(html_file).with_suffix('.md')
+            md_file = Path(html_filename).with_suffix('.md')
             output_path = output_dir / md_file
             
             # Create parent directories if needed
@@ -130,7 +128,7 @@ def process_docs(
             processed_files.append((entry, new_entry))
             
         except Exception as e:
-            print(f"Error processing {entry.get('file', 'unknown file')}: {str(e)}")
+            print(f"Error processing {url}: {str(e)}")
     
     # De-duplicate content across files
     deduplicated_files = []

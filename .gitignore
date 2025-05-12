@@ -11,7 +11,7 @@ __pycache__
 *.txt
 *.whl
 .env
-*.md
+#*.md
 output-md/raw_html
 llama_docs/
 **/.claude/settings.local.json

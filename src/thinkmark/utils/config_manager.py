@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
-import typer 
+import typer
+from typing import Optional
 
 APP_NAME = "thinkmark"
 CONFIG_DIR = Path(typer.get_app_dir(APP_NAME, force_posix=True))
@@ -27,13 +28,13 @@ def save_config(config_data: dict):
     with open(CONFIG_FILE, 'w') as f:
         json.dump(config_data, f, indent=2)
 
-def get_storage_path() -> Optional[Path]:
+def get_global_storage_path() -> Optional[Path]:
     """Gets the configured global storage path."""
     config = load_config()
     path_str = config.get("storage_path")
     return Path(path_str) if path_str else None
 
-def set_storage_path(path: Path):
+def set_global_storage_path(path: Path):
     """Sets the global storage path."""
     config = load_config() # Load existing to not overwrite other potential settings
     config["storage_path"] = str(path.resolve()) # Store absolute path

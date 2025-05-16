@@ -32,7 +32,8 @@ def _execute_full_pipeline(
     url: str,
     site_base_output_dir: Path,
     site_specific_scrape_config_file: Optional[Path],
-    api_key_for_annotation: Optional[str]
+    api_key_for_annotation: Optional[str],
+    build_vector_index: bool = False
 ):
     """
     Executes the full scrape, markify, and annotate pipeline for a given URL.
@@ -111,16 +112,41 @@ def _execute_full_pipeline(
         console.print("Proceeding with partially completed pipeline...")
         annotated_files_count = 0
 
+    # Step 4 (optional): Build vector index
+    vector_index_dir = None
+    if build_vector_index:
+        from thinkmark.vector.processor import build_index
+        
+        console.print(f"\n[bold cyan]Step 4/4: Building vector index for RAG...[/bold cyan]")
+        vector_index_dir = site_base_output_dir / "vector_index"
+        vector_index_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Use the most advanced content available (annotated > markdown)
+        input_dir = annotated_dir if annotated_files_count > 0 else markdown_dir
+        
+        try:
+            build_index(input_dir=input_dir, persist_dir=vector_index_dir)
+            console.print(f"Vector index built successfully at: {vector_index_dir.resolve()}")
+        except Exception as e:
+            console.print(f"[bold yellow]Warning:[/bold yellow] Vector indexing failed: {e}")
+            console.print("Proceeding with partially completed pipeline...")
+            vector_index_dir = None
+    
     console.print(f"\n[bold green]Processing pipeline for {url} completed![/bold green]")
     if annotated_files_count > 0:
         console.print(f"Final annotated content available at: {annotated_dir.resolve()}")
     else:
         console.print(f"Markdown content available at: {markdown_dir.resolve()}")
     
+    if vector_index_dir:
+        console.print(f"Vector index available at: {vector_index_dir.resolve()}")
+        console.print(f"Query with: thinkmark vector query 'your question' --persist-dir {vector_index_dir}")
+    
     return {
         "raw_html_dir": raw_html_dir,
         "markdown_dir": markdown_dir,
         "annotated_dir": annotated_dir,
+        "vector_index_dir": vector_index_dir,
         "html_count": scraped_pages_count,
         "markdown_count": markdown_files_count,
         "annotated_count": annotated_files_count
@@ -145,6 +171,9 @@ app.add_typer(markify_app, name="markify", help="Convert HTML to Markdown (manua
 
 from thinkmark.annotate.cli import app as annotate_app
 app.add_typer(annotate_app, name="annotate", help="Annotate documentation with LLM (manual)")
+
+from thinkmark.vector.cli import app as vector_app
+app.add_typer(vector_app, name="vector", help="Build and query vector indexes for RAG (manual)")
 
 try:
     from thinkmark.mcp.fast_cli import app as mcp_app # Assumes mcp commands are in fast_cli.py
@@ -228,6 +257,12 @@ def ingest_site(
         "--force",
         "-f",
         help="Force re-ingestion even if the site directory already exists.",
+    ),
+    build_vector_index: bool = typer.Option(
+        False,
+        "--vector-index",
+        "-v",
+        help="Build a vector index for RAG from the processed documents.",
     )
 ):
     """
@@ -266,7 +301,8 @@ def ingest_site(
             url=url,
             site_base_output_dir=site_final_output_dir,
             site_specific_scrape_config_file=site_config_file,
-            api_key_for_annotation=api_key
+            api_key_for_annotation=api_key,
+            build_vector_index=build_vector_index
         )
     except Exception as e:
         console.print(f"[bold red]Error during ingestion process for {url}:[/bold red]")

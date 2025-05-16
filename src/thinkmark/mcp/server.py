@@ -72,12 +72,14 @@ def register_tools(server: FastMCP, storage_path: Optional[Path] = None) -> None
     from thinkmark.mcp.tools.markify import register_markify_tool
     from thinkmark.mcp.tools.annotate import register_annotate_tool
     from thinkmark.mcp.tools.pipeline import register_pipeline_tool
+    from thinkmark.mcp.tools.vector import register_vector_tool
     
     # Register each tool with the server
     register_scrape_tool(server, storage_path)
     register_markify_tool(server, storage_path)
     register_annotate_tool(server, storage_path)
     register_pipeline_tool(server, storage_path)
+    register_vector_tool(server, storage_path)
     
     logger.info("All ThinkMark tools registered with MCP server")
 

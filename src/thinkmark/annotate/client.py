@@ -54,6 +54,69 @@ class LLMClient:
         )
 
 
+def process_document(
+    markdown_content: str,
+    url: str,
+    title: str,
+    context: Dict[str, Any],
+    api_key: Optional[str] = None
+) -> str:
+    """
+    Process a single Markdown document with LLM and return enhanced/annotated content.
+    
+    Args:
+        markdown_content: The Markdown content to annotate
+        url: URL of the document
+        title: Title of the document
+        context: Document context (parent, siblings, children)
+        api_key: API key for LLM service
+        
+    Returns:
+        Annotated Markdown content
+    """
+    # Initialize LLM client
+    llm_client = LLMClient(api_key=api_key)
+    
+    # Create a document summary using the LLM
+    try:
+        completion = llm_client.summarize_markdown(
+            markdown_content,
+            temperature=0.7,
+            max_tokens=300
+        )
+        summary = completion.choices[0].message.content
+    except Exception as e:
+        print(f"Error summarizing {url}: {e}")
+        summary = ""
+    
+    # Skip if summary failed
+    if summary.strip().upper() == "FAIL":
+        return markdown_content
+    
+    # Add frontmatter and summary to the document
+    frontmatter = f"---\ntitle: {title}\nurl: {url}\n"
+    
+    # Add parent info if available
+    if context.get("parent"):
+        parent = context["parent"]
+        frontmatter += f"parent: {parent['title']}\nparent_url: {parent['url']}\n"
+    
+    # Add summary
+    frontmatter += f"summary: \"{summary.replace('"', '\"')}\"\n---\n\n"
+    
+    # Escape Rich formatting tags in the content to prevent markup errors
+    # Common Rich formatting tags that might appear in markdown code blocks
+    rich_tags = ['[bold]', '[/bold]', '[italic]', '[/italic]', '[code]', '[/code]', 
+                '[red]', '[/red]', '[green]', '[/green]', '[blue]', '[/blue]']
+    
+    escaped_content = markdown_content
+    for tag in rich_tags:
+        escaped_content = escaped_content.replace(tag, '\\' + tag)
+    
+    # Return the annotated content with escaped Rich formatting
+    return frontmatter + escaped_content
+
+
 def annotate_docs(
     input_dir: Union[str, Path],
     output_dir: Union[str, Path],

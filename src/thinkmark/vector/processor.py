@@ -127,6 +127,14 @@ def build_index(
         index_store = SimpleIndexStore()
         
         logger.debug(f"Creating storage context with fresh document and index stores")
+        
+        # Create a fresh persist directory to avoid property_graph_store and graph_store issues
+        if persist_dir.exists():
+            for item in persist_dir.glob('*graph_store*'):
+                if item.is_file():
+                    logger.debug(f"Removing old graph store file: {item}")
+                    item.unlink()
+        
         storage_ctx = StorageContext.from_defaults(
             vector_store=vector_store,
             docstore=docstore,

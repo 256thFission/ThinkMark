@@ -34,8 +34,15 @@ def get_global_storage_path() -> Optional[Path]:
     path_str = config.get("storage_path")
     return Path(path_str) if path_str else None
 
-def set_global_storage_path(path: Path):
-    """Sets the global storage path."""
+def set_global_storage_path(path):
+    """Sets the global storage path.
+    
+    Args:
+        path: Either a Path object or a string representing the path
+    """
     config = load_config() # Load existing to not overwrite other potential settings
+    # Convert to Path if it's a string
+    if isinstance(path, str):
+        path = Path(path)
     config["storage_path"] = str(path.resolve()) # Store absolute path
     save_config(config)

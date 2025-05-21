@@ -2,6 +2,8 @@
 
 This module provides a unified CLI for the ThinkMark MCP server with support for
 both standard and Claude Desktop sync modes.
+
+Updated to use modern MCP conventions with decorator pattern.
 """
 
 import os
@@ -14,7 +16,7 @@ import typer
 from rich.console import Console
 
 from thinkmark.utils.logging import configure_logging, get_console, log_exception
-from thinkmark.utils.config_manager import get_storage_path
+from thinkmark.utils.config_manager import get_global_storage_path as get_storage_path
 
 # Create the Typer app
 app = typer.Typer(help="ThinkMark MCP Server")
@@ -67,11 +69,8 @@ def start_stdio_server(
         if storage_path:
             logger.info(f"Using storage path: {storage_path}")
         
-        # Get the server instance
-        server = get_server(config_file, storage_path)
-        
         # Start the server with stdio transport
-        server.run(transport="stdio")
+        mcp.run(transport="stdio")
         
     except ImportError as e:
         log_exception(logger, e, "dependency check")
@@ -115,8 +114,8 @@ def start_http_server(
         logger.debug("Claude Desktop compatibility mode enabled")
     
     try:
-        # Import the server (will apply nest_asyncio if needed)
-        from thinkmark.mcp.server import get_server
+        # Import the already-configured server instance
+        from thinkmark.mcp.server import mcp
         
         console.print(f"[bold blue]Starting ThinkMark MCP Server (HTTP transport) on {host}:{port}[/]")
         
@@ -132,11 +131,8 @@ def start_http_server(
         if storage_path:
             logger.info(f"Using storage path: {storage_path}")
         
-        # Get the server instance
-        server = get_server(config_file, storage_path)
-        
-        # Start the server with HTTP transport
-        server.run(transport="http", host=host, port=port)
+        # Start the server with web transport (modern naming)
+        mcp.run(transport="web", host=host, port=port)
         
     except ImportError as e:
         log_exception(logger, e, "dependency check")

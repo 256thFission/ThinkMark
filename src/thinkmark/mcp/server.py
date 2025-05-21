@@ -2,6 +2,7 @@
 
 This module provides a unified server implementation with support for both
 standard async mode and Claude Desktop compatible sync mode.
+Focused on document querying functionality following MCP best practices.
 """
 
 import os
@@ -26,78 +27,99 @@ logger = configure_logging(
 )
 console = get_console()
 
-# Singleton instance for the server
+# Global storage path for tools to access
+global_storage_path: Optional[Path] = None
+
+# Auto-detect ThinkMark data directory
+data_paths = [
+    Path("/home/dev/thinkmark_data"),
+    Path("/home/dev/ThinkMark/thinkmark_data"),
+    Path.home() / "thinkmark_data"
+]
+
+for path in data_paths:
+    if path.exists() and path.is_dir():
+        if any(p.is_dir() for p in path.glob("*")):
+            global_storage_path = path
+            logger.info(f"Auto-detected ThinkMark data at: {global_storage_path}")
+            break
+
+# Global MCP server instance
+mcp = FastMCP(
+    name="ThinkMark",
+    version="0.2.0",
+    description="Documentation querying tools for ThinkMark",
+    sync_mode=is_claude_desktop  # Enable sync mode for Claude Desktop
+)
+
+# Initialize for Claude Desktop compatibility if needed
+if is_claude_desktop:
+    try:
+        import nest_asyncio
+        nest_asyncio.apply()
+        logger.debug("Applied nest_asyncio for Claude Desktop compatibility")
+    except ImportError:
+        logger.warning("nest_asyncio not available, some features might not work correctly")
+
+# Import tools modules - these will register their decorated functions with mcp
+from thinkmark.mcp.tools import discovery, vector  # These modules define tools using decorators
+
+# Singleton instance for backward compatibility
 _server_instance = None
 
 
 def get_server(config_path: Optional[Path] = None, storage_path: Optional[Path] = None) -> FastMCP:
-    """Get or create the singleton server instance."""
-    global _server_instance
-    if _server_instance is None:
-        _server_instance = create_server(config_path, storage_path)
-    return _server_instance
+    """Get the global server instance."""
+    global global_storage_path
+    
+    if storage_path:
+        global_storage_path = storage_path
+        logger.info(f"Setting global storage path to: {global_storage_path}")
+    elif global_storage_path:
+        logger.info(f"Using auto-detected storage path: {global_storage_path}")
+    else:
+        # If no storage path is set or auto-detected, try common locations
+        data_paths = [
+            Path("/home/dev/thinkmark_data"),
+            Path("/home/dev/ThinkMark/thinkmark_data"),
+            Path.home() / "thinkmark_data",
+            Path.home() / ".thinkmark"
+        ]
+        
+        for path in data_paths:
+            if path.exists() and path.is_dir():
+                if any(p.is_dir() for p in path.glob("*")):
+                    global_storage_path = path
+                    logger.info(f"Found ThinkMark data at: {global_storage_path}")
+                    break
+    
+    # Register resources each time to ensure they're up to date
+    register_resources()
+    return mcp
 
 
 def create_server(config_path: Optional[Path] = None, storage_path: Optional[Path] = None) -> FastMCP:
-    """Create a new FastMCP server instance for ThinkMark."""
-    # If in Claude Desktop mode, ensure nest_asyncio is applied
-    if is_claude_desktop:
-        try:
-            import nest_asyncio
-            nest_asyncio.apply()
-            logger.debug("Applied nest_asyncio for Claude Desktop compatibility")
-        except ImportError:
-            logger.warning("nest_asyncio not available, some features might not work correctly")
-
-    # Create FastMCP server with ThinkMark information
-    server = FastMCP(
-        name="ThinkMark",
-        version="0.2.0",
-        description="Documentation to LLM pipeline (scrape, convert, annotate)",
-        sync_mode=is_claude_desktop  # Enable sync mode for Claude Desktop
-    )
+    """Create a new FastMCP server instance for ThinkMark (for backward compatibility)."""
+    global global_storage_path
     
-    # Register tools and resources
-    register_tools(server, storage_path)
-    register_resources(server)
+    if storage_path:
+        global_storage_path = storage_path
+        logger.info(f"Setting global storage path to: {global_storage_path}")
+    
+    # Register resources
+    register_resources()
     
     logger.info(f"ThinkMark MCP Server initialized with FastMCP (Claude Desktop mode: {is_claude_desktop})")
-    return server
+    return mcp
 
 
-def register_tools(server: FastMCP, storage_path: Optional[Path] = None) -> None:
-    """Register all ThinkMark tools with the FastMCP server."""
-    # Import and register individual tools from the tools package
-    from thinkmark.mcp.tools.scrape import register_scrape_tool
-    from thinkmark.mcp.tools.markify import register_markify_tool
-    from thinkmark.mcp.tools.annotate import register_annotate_tool
-    from thinkmark.mcp.tools.pipeline import register_pipeline_tool
-    from thinkmark.mcp.tools.vector import register_vector_tool
-    
-    # Register each tool with the server
-    register_scrape_tool(server, storage_path)
-    register_markify_tool(server, storage_path)
-    register_annotate_tool(server, storage_path)
-    register_pipeline_tool(server, storage_path)
-    register_vector_tool(server, storage_path)
-    
-    logger.info("All ThinkMark tools registered with MCP server")
+# Tools are now registered automatically via decorators in their respective modules
 
 
-def register_resources(server: FastMCP) -> None:
-    """Register all ThinkMark resources with the FastMCP server."""
-    from thinkmark.utils.json_io import load_json, load_jsonl
+def register_resources() -> None:
+    """Register ThinkMark resources with the FastMCP server."""
     
-    @server.resource("resource://config_example")
-    def get_config_resource():
-        """Example configuration file in YAML format."""
-        example_config_path = Path("/home/dev/ThinkMark/example_config.yaml")
-        if example_config_path.exists():
-            with open(example_config_path, 'r') as f:
-                return f.read()
-        return "Configuration not found"
-    
-    @server.resource("resource://readme")
+    @mcp.resource("resource://readme")
     def get_readme_resource():
         """ThinkMark README file in Markdown format."""
         readme_path = Path("/home/dev/ThinkMark/README.md")
@@ -105,59 +127,14 @@ def register_resources(server: FastMCP) -> None:
             with open(readme_path, 'r') as f:
                 return f.read()
         return "README not found"
-    
-    @server.resource("resource://hierarchy_template")
-    def get_hierarchy_template():
-        """Example hierarchy JSON template."""
-        template = {
-            "uri": "https://example.com/docs",
-            "title": "Documentation Root",
-            "description": "Root documentation page",
-            "children": [
-                {
-                    "uri": "https://example.com/docs/getting-started",
-                    "title": "Getting Started",
-                    "description": "Getting started guide",
-                    "children": []
-                },
-                {
-                    "uri": "https://example.com/docs/api",
-                    "title": "API Reference",
-                    "description": "API documentation",
-                    "children": [
-                        {
-                            "uri": "https://example.com/docs/api/endpoints",
-                            "title": "API Endpoints",
-                            "description": "List of API endpoints",
-                            "children": []
-                        }
-                    ]
-                }
-            ]
+        
+    @mcp.resource("resource://query_example")
+    def get_query_example():
+        """Example query for ThinkMark docs."""
+        example = {
+            "question": "How do I query documentation?",
+            "persist_dir": "/path/to/vector_index",
+            "top_k": 3,
+            "similarity_threshold": 0.7
         }
-        return template
-    
-    @server.resource("resource://urls_map_template")
-    def get_urls_map_template():
-        """Example URLs map JSONL template."""
-        templates = [
-            {
-                "uri": "https://example.com/docs",
-                "local_path": "index.html",
-                "title": "Documentation Root",
-                "description": "Root documentation page"
-            },
-            {
-                "uri": "https://example.com/docs/getting-started",
-                "local_path": "getting-started.html",
-                "title": "Getting Started",
-                "description": "Getting started guide"
-            },
-            {
-                "uri": "https://example.com/docs/api",
-                "local_path": "api.html",
-                "title": "API Reference",
-                "description": "API documentation"
-            }
-        ]
-        return templates
+        return example

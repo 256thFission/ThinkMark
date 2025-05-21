@@ -1,9 +1,9 @@
-"""MCP server implementation for ThinkMark.
+"""MCP server implementation for ThinkMark document querying.
 
 This module provides MCP server implementations for ThinkMark using the FastMCP library.
 It supports both standard mode and Claude Desktop sync mode through a unified implementation.
 
-The MCP server enables ThinkMark's scrape, markify, and annotate tools to be used via
+The MCP server enables ThinkMark's document querying tools to be used via
 the Model-Context Protocol (MCP), allowing integration with Claude Desktop and other clients.
 """
 

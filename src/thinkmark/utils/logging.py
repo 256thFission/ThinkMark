@@ -88,8 +88,9 @@ def log_exception(logger: logging.Logger, e: Exception, context: str = "operatio
     logger.error(f"Error in {context}: {str(e)}\n{error_details}")
     
     # Always print to stderr for Claude Desktop compatibility
+    # Note: console is already configured to stderr at initialization
     is_claude_desktop = os.getenv("THINKMARK_CLAUDE_DESKTOP") == "1"
     if is_claude_desktop:
-        _console.print(f"[bold red]Error in {context}: {str(e)}[/]", file=sys.stderr)
+        _console.print(f"[bold red]Error in {context}: {str(e)}[/]")
     else:
         print(f"[bold red]Error in {context}:[/] {str(e)}", file=sys.stderr)

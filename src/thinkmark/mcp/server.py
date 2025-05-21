@@ -13,9 +13,10 @@ from typing import Any, Dict, List, Optional, Union
 
 from fastmcp import FastMCP
 
-# Import the centralized logging
+# Import the centralized logging and path management
 from thinkmark.utils.logging import configure_logging, get_console, log_exception
 from thinkmark.utils.config import get_config
+from thinkmark.utils.paths import get_storage_path as get_central_storage_path
 
 # Set up logging
 logger = configure_logging(
@@ -28,37 +29,24 @@ console = get_console()
 # Check if Claude Desktop sync mode is enabled
 is_claude_desktop = os.getenv("THINKMARK_CLAUDE_DESKTOP") == "1"
 
-# Initialize storage path
-storage_path: Optional[Path] = None
+# Initialize storage path using centralized path manager
+storage_path: Optional[Path] = get_central_storage_path()
 
-def get_storage_path(specified_path: Optional[Path] = None) -> Optional[Path]:
-    """Get storage path from specified path or auto-detect from common locations"""
+# For backwards compatibility - redirects to the centralized version
+def get_storage_path(specified_path: Optional[Path] = None) -> Path:
+    """Get storage path from specified path or auto-detect from common locations
+    
+    This function is maintained for backwards compatibility and redirects to
+    the centralized path management function.
+    """
     global storage_path
+    path = get_central_storage_path(specified_path)
     
+    # Update global storage_path for compatibility with existing code
     if specified_path:
-        logger.info(f"Using specified storage path: {specified_path}")
-        return specified_path
+        storage_path = path
     
-    # Define common paths to check
-    data_paths = [
-        Path("/home/dev/thinkmark_data"),
-        Path("/home/dev/ThinkMark/thinkmark_data"),
-        Path.home() / "thinkmark_data",
-        Path.home() / ".thinkmark"
-    ]
-    
-    # Check each path
-    for path in data_paths:
-        if path.exists() and path.is_dir():
-            if any(p.is_dir() for p in path.glob("*")):
-                logger.info(f"Auto-detected ThinkMark data at: {path}")
-                return path
-    
-    logger.warning("No ThinkMark data directory found")
-    return None
-
-# Auto-detect storage path on module import
-storage_path = get_storage_path()
+    return path
 
 # Global MCP server instance
 mcp = FastMCP(
@@ -97,6 +85,7 @@ def register_resources():
     @mcp.resource("resource://readme")
     def get_readme_resource():
         """ThinkMark README file in Markdown format."""
+        # Use centralized path management
         readme_path = Path("/home/dev/ThinkMark/README.md")
         if readme_path.exists():
             with open(readme_path, 'r') as f:

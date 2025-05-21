@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from thinkmark.utils.logging import configure_logging, log_exception
+from thinkmark.utils.paths import get_storage_path
 from thinkmark.mcp.server import mcp
 
 # Set up logging
@@ -39,8 +40,8 @@ def query_docs(
         # Import here to avoid slow startup
         from thinkmark.vector.processor import load_index
         
-        # Convert to Path object
-        persist_path = Path(persist_dir)
+        # Ensure path is a Path object using our centralized path management
+        persist_path = get_storage_path(persist_dir)
         
         logger.info(f"Querying index at {persist_path} with question: '{question}'")
         

@@ -3,19 +3,19 @@ from pathlib import Path
 import typer
 from typing import Optional
 
-APP_NAME = "thinkmark"
-CONFIG_DIR = Path(typer.get_app_dir(APP_NAME, force_posix=True))
-CONFIG_FILE = CONFIG_DIR / "config.json"
+# Import centralized paths (but avoid circular imports by not using constants)
+from thinkmark.utils.paths import get_config_dir, get_config_file
 
 def ensure_config_dir_exists():
     """Ensures the configuration directory exists."""
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    get_config_dir()
 
 def load_config() -> dict:
     """Loads the application configuration."""
     ensure_config_dir_exists()
-    if CONFIG_FILE.exists():
-        with open(CONFIG_FILE, 'r') as f:
+    config_file = get_config_file()
+    if config_file.exists():
+        with open(config_file, 'r') as f:
             try:
                 return json.load(f)
             except json.JSONDecodeError:
@@ -25,14 +25,17 @@ def load_config() -> dict:
 def save_config(config_data: dict):
     """Saves the application configuration."""
     ensure_config_dir_exists()
-    with open(CONFIG_FILE, 'w') as f:
+    config_file = get_config_file()
+    with open(config_file, 'w') as f:
         json.dump(config_data, f, indent=2)
 
 def get_storage_path() -> Optional[Path]:
-    """Gets the configured global storage path."""
-    config = load_config()
-    path_str = config.get("storage_path")
-    return Path(path_str) if path_str else None
+    """Gets the configured global storage path.
+    
+    For backwards compatibility - new code should use thinkmark.utils.paths.get_storage_path
+    """
+    from thinkmark.utils.paths import get_storage_path as central_get_storage_path
+    return central_get_storage_path()
 
 def set_storage_path(path):
     """Sets the global storage path.

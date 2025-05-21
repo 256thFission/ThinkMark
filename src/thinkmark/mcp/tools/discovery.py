@@ -11,43 +11,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from thinkmark.utils.logging import configure_logging, log_exception
-from thinkmark.mcp.server import mcp, storage_path
+from thinkmark.utils.paths import get_storage_path, get_vector_index_path
+from thinkmark.mcp.server import mcp
 
 # Set up logging
 logger = configure_logging(module_name="thinkmark.mcp.tools.discovery")
-
-
-# Helper function to get storage path
-def get_storage_path() -> Optional[Path]:
-    """Get the storage path for ThinkMark."""
-    # First check for common ThinkMark data directories
-    common_paths = [
-        Path("/home/dev/thinkmark_data"),  # Main data directory from our tests
-        Path("/home/dev/ThinkMark/thinkmark_data"),
-        Path("/home/dev/ThinkMark/output")  # From previous Claude config
-    ]
-    
-    for path in common_paths:
-        if path.exists() and path.is_dir():
-            if any(p.is_dir() for p in path.glob("*")):
-                logger.info(f"Found ThinkMark data directory at {path}")
-                return path
-    
-    # Use the global storage path if set
-    if storage_path:
-        logger.debug(f"Using storage path: {storage_path}")
-        return storage_path
-        
-    # Try environment variable if global path not set
-    env_path = os.getenv("THINKMARK_STORAGE_PATH")
-    if env_path:
-        logger.debug(f"Using environment storage path: {env_path}")
-        return Path(env_path)
-    
-    # Default to user home directory as last resort
-    default_path = Path.home() / ".thinkmark"
-    logger.debug(f"Using default storage path: {default_path}")
-    return default_path
 
 @mcp.tool()
 def list_available_docs(base_path: Optional[str] = None) -> Dict[str, Any]:
@@ -62,14 +30,8 @@ def list_available_docs(base_path: Optional[str] = None) -> Dict[str, Any]:
     """
     try:
         # Determine the search path (user-provided or configured storage)
-        search_path = Path(base_path) if base_path else get_storage_path()
+        search_path = get_storage_path(base_path)
         
-        if not search_path:
-            return {
-                "error": "No search path provided and no default storage path configured",
-                "docs": []
-            }
-            
         logger.info(f"Searching for vector indexes in {search_path}")
         
         # Find all directories that contain vector indexes
@@ -91,7 +53,7 @@ def list_available_docs(base_path: Optional[str] = None) -> Dict[str, Any]:
                 continue
                 
             # Check for the vector_index subdirectory structure first
-            vector_index_dir = site_dir / "vector_index"
+            vector_index_dir = get_vector_index_path(site_dir.name, search_path)
             if vector_index_dir.exists() and vector_index_dir.is_dir():
                 # Check for required vector index files
                 has_docstore = (vector_index_dir / "docstore.json").exists()

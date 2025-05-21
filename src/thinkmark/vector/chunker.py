@@ -3,7 +3,7 @@ Chunking + vector-index helpers for ThinkMark docs.
 Defaults: SentenceSplitter(1024/20) + FaissVectorStore
 """
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 import logging
 
 from llama_index.core import (
@@ -13,6 +13,7 @@ from llama_index.core import (
 from llama_index.core.node_parser import SentenceSplitter
 
 from thinkmark.utils.logging import configure_logging
+from thinkmark.utils.paths import ensure_path
 
 # Configure module logger
 logger = configure_logging(module_name="thinkmark.vector.chunker")
@@ -30,7 +31,7 @@ class Chunker:
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
 
-    def chunk_documents(self, input_dir: Path):
+    def chunk_documents(self, input_dir: Union[str, Path]):
         """
         Load markdown files and split into nodes.
         
@@ -46,7 +47,8 @@ class Chunker:
         Returns:
             List of nodes extracted from the documents
         """
-        input_dir = Path(input_dir)
+        # Use centralized path management to ensure path is valid and exists
+        input_dir = ensure_path(input_dir)
         logger.debug(f"Processing input directory: {input_dir}")
         
         # Check if we're dealing with the ThinkMark directory structure

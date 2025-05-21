@@ -71,7 +71,7 @@ def init_thinkmark(
     """
     console.print("\n[bold magenta]--- ThinkMark Initialization ---[/bold magenta]")
 
-    current_global_path = config_manager.get_global_storage_path()
+    current_global_path = config_manager.get_storage_path()
     if current_global_path:
         console.print(f"Current storage path: [green]{current_global_path}[/green]")
         
@@ -100,7 +100,7 @@ def init_thinkmark(
         storage_path.mkdir(parents=True, exist_ok=True)
         
         # Save configuration
-        config_manager.set_global_storage_path(str(storage_path))
+        config_manager.set_storage_path(str(storage_path))
         console.print(f"[bold green]Storage path set to:[/bold green] {storage_path}")
         
         # Assuming config_manager has a CONFIG_FILE attribute for display
@@ -136,7 +136,7 @@ def run_unified_pipeline(
     Uses a unified memory-efficient approach that minimizes intermediate files.
     """
     # Use global storage path if output_dir not specified
-    storage_path = config_manager.get_global_storage_path()
+    storage_path = config_manager.get_storage_path()
     if not output_dir and storage_path:
         # Extract hostname from URL for directory name
         import urllib.parse
@@ -222,7 +222,7 @@ def ingest_site(
     Each site will be stored in its own subdirectory.
     """
     # Get the global storage path for ThinkMark data
-    storage_path = config_manager.get_global_storage_path()
+    storage_path = config_manager.get_storage_path()
     if not storage_path:
         console.print("[bold yellow]No global storage path configured.[/bold yellow]")
         console.print("Please run `thinkmark init` first to set up a storage location.")

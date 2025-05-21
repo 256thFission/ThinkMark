@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-"""Simple script to run the ThinkMark MCP server directly.
-This follows modern MCP conventions using the decorator pattern.
+"""Universal script to run ThinkMark MCP with or without Claude Desktop.
+This follows modern MCP conventions using the decorator pattern and works 
+with both standard async mode and Claude Desktop compatible sync mode.
 """
 
 import os
@@ -61,13 +62,18 @@ if __name__ == "__main__":
     
     # Import the MCP server with all tools already registered
     from thinkmark.mcp.server import mcp, get_server
-    
+
     # Set storage path if provided
-    storage_path = Path(args.storage_path) if args.storage_path else None
-    if storage_path:
-        print(f"Using storage path: {storage_path}")
-        get_server(storage_path=storage_path)
-    
+    if args.storage_path:
+        print(f"Using storage path: {args.storage_path}")
+        get_server(path_override=Path(args.storage_path))
+    else:
+        from thinkmark.mcp.server import storage_path
+        if storage_path:
+            print(f"Using auto-detected storage path: {storage_path}")
+        else:
+            print("Warning: No ThinkMark data directory found")
+
     # Configure logging
     import logging
     logging.basicConfig(level=getattr(logging, args.log_level))

@@ -16,7 +16,8 @@ import typer
 from rich.console import Console
 
 from thinkmark.utils.logging import configure_logging, get_console, log_exception
-from thinkmark.utils.config_manager import get_global_storage_path as get_storage_path
+# Import storage path handling from our server module instead of config_manager
+from thinkmark.mcp.server import get_storage_path, storage_path
 
 # Create the Typer app
 app = typer.Typer(help="ThinkMark MCP Server")

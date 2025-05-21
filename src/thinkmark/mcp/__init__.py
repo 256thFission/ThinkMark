@@ -8,8 +8,8 @@ the Model-Context Protocol (MCP), allowing integration with Claude Desktop and o
 """
 
 # Unified public exports
-from thinkmark.mcp.server import get_server, create_server
+from thinkmark.mcp.server import get_server, mcp
 from thinkmark.mcp.cli import app
 
 # For backward compatibility
-from thinkmark.mcp.server import is_claude_desktop
+from thinkmark.mcp.server import is_claude_desktop, storage_path

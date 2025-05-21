@@ -28,13 +28,13 @@ def save_config(config_data: dict):
     with open(CONFIG_FILE, 'w') as f:
         json.dump(config_data, f, indent=2)
 
-def get_global_storage_path() -> Optional[Path]:
+def get_storage_path() -> Optional[Path]:
     """Gets the configured global storage path."""
     config = load_config()
     path_str = config.get("storage_path")
     return Path(path_str) if path_str else None
 
-def set_global_storage_path(path):
+def set_storage_path(path):
     """Sets the global storage path.
     
     Args:

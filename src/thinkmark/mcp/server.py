@@ -6,7 +6,8 @@ Focused on document querying functionality following MCP best practices.
 """
 
 import os
-import threading
+import importlib
+import pkgutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -16,9 +17,6 @@ from fastmcp import FastMCP
 from thinkmark.utils.logging import configure_logging, get_console, log_exception
 from thinkmark.utils.config import get_config
 
-# Check if Claude Desktop sync mode is enabled
-is_claude_desktop = os.getenv("THINKMARK_CLAUDE_DESKTOP") == "1"
-
 # Set up logging
 logger = configure_logging(
     module_name="thinkmark.mcp.server", 
@@ -27,22 +25,40 @@ logger = configure_logging(
 )
 console = get_console()
 
-# Global storage path for tools to access
-global_storage_path: Optional[Path] = None
+# Check if Claude Desktop sync mode is enabled
+is_claude_desktop = os.getenv("THINKMARK_CLAUDE_DESKTOP") == "1"
 
-# Auto-detect ThinkMark data directory
-data_paths = [
-    Path("/home/dev/thinkmark_data"),
-    Path("/home/dev/ThinkMark/thinkmark_data"),
-    Path.home() / "thinkmark_data"
-]
+# Initialize storage path
+storage_path: Optional[Path] = None
 
-for path in data_paths:
-    if path.exists() and path.is_dir():
-        if any(p.is_dir() for p in path.glob("*")):
-            global_storage_path = path
-            logger.info(f"Auto-detected ThinkMark data at: {global_storage_path}")
-            break
+def get_storage_path(specified_path: Optional[Path] = None) -> Optional[Path]:
+    """Get storage path from specified path or auto-detect from common locations"""
+    global storage_path
+    
+    if specified_path:
+        logger.info(f"Using specified storage path: {specified_path}")
+        return specified_path
+    
+    # Define common paths to check
+    data_paths = [
+        Path("/home/dev/thinkmark_data"),
+        Path("/home/dev/ThinkMark/thinkmark_data"),
+        Path.home() / "thinkmark_data",
+        Path.home() / ".thinkmark"
+    ]
+    
+    # Check each path
+    for path in data_paths:
+        if path.exists() and path.is_dir():
+            if any(p.is_dir() for p in path.glob("*")):
+                logger.info(f"Auto-detected ThinkMark data at: {path}")
+                return path
+    
+    logger.warning("No ThinkMark data directory found")
+    return None
+
+# Auto-detect storage path on module import
+storage_path = get_storage_path()
 
 # Global MCP server instance
 mcp = FastMCP(
@@ -61,63 +77,22 @@ if is_claude_desktop:
     except ImportError:
         logger.warning("nest_asyncio not available, some features might not work correctly")
 
-# Import tools modules - these will register their decorated functions with mcp
-from thinkmark.mcp.tools import discovery, vector  # These modules define tools using decorators
-
-# Singleton instance for backward compatibility
-_server_instance = None
-
-
-def get_server(config_path: Optional[Path] = None, storage_path: Optional[Path] = None) -> FastMCP:
-    """Get the global server instance."""
-    global global_storage_path
+# Function to import all tool modules
+def import_all_tools():
+    """Import all tool modules to register their tools"""
+    import thinkmark.mcp.tools as tools_pkg
     
-    if storage_path:
-        global_storage_path = storage_path
-        logger.info(f"Setting global storage path to: {global_storage_path}")
-    elif global_storage_path:
-        logger.info(f"Using auto-detected storage path: {global_storage_path}")
-    else:
-        # If no storage path is set or auto-detected, try common locations
-        data_paths = [
-            Path("/home/dev/thinkmark_data"),
-            Path("/home/dev/ThinkMark/thinkmark_data"),
-            Path.home() / "thinkmark_data",
-            Path.home() / ".thinkmark"
-        ]
-        
-        for path in data_paths:
-            if path.exists() and path.is_dir():
-                if any(p.is_dir() for p in path.glob("*")):
-                    global_storage_path = path
-                    logger.info(f"Found ThinkMark data at: {global_storage_path}")
-                    break
-    
-    # Register resources each time to ensure they're up to date
-    register_resources()
-    return mcp
+    for _, name, _ in pkgutil.iter_modules(tools_pkg.__path__):
+        try:
+            importlib.import_module(f"thinkmark.mcp.tools.{name}")
+            logger.debug(f"Imported tool module: {name}")
+        except ImportError as e:
+            logger.error(f"Failed to import tool module {name}: {e}")
 
 
-def create_server(config_path: Optional[Path] = None, storage_path: Optional[Path] = None) -> FastMCP:
-    """Create a new FastMCP server instance for ThinkMark (for backward compatibility)."""
-    global global_storage_path
-    
-    if storage_path:
-        global_storage_path = storage_path
-        logger.info(f"Setting global storage path to: {global_storage_path}")
-    
-    # Register resources
-    register_resources()
-    
-    logger.info(f"ThinkMark MCP Server initialized with FastMCP (Claude Desktop mode: {is_claude_desktop})")
-    return mcp
-
-
-# Tools are now registered automatically via decorators in their respective modules
-
-
-def register_resources() -> None:
-    """Register ThinkMark resources with the FastMCP server."""
+# Register ThinkMark resources
+def register_resources():
+    """Register ThinkMark resources with the FastMCP server"""
     
     @mcp.resource("resource://readme")
     def get_readme_resource():
@@ -138,3 +113,21 @@ def register_resources() -> None:
             "similarity_threshold": 0.7
         }
         return example
+
+# Initialize server: import tools and register resources
+import_all_tools()
+register_resources()
+
+# Legacy function for backward compatibility
+def get_server(config_path: Optional[Path] = None, path_override: Optional[Path] = None) -> FastMCP:
+    """Get the global server instance with optional storage path override."""
+    global storage_path
+    
+    if path_override:
+        storage_path = get_storage_path(path_override)
+        logger.info(f"Updated global storage path to: {storage_path}")
+    
+    return mcp
+
+
+

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from thinkmark.utils.logging import configure_logging, log_exception
-from thinkmark.mcp.server import mcp, global_storage_path
+from thinkmark.mcp.server import mcp, storage_path
 
 # Set up logging
 logger = configure_logging(module_name="thinkmark.mcp.tools.discovery")
@@ -34,9 +34,9 @@ def get_storage_path() -> Optional[Path]:
                 return path
     
     # Use the global storage path if set
-    if global_storage_path:
-        logger.debug(f"Using global storage path: {global_storage_path}")
-        return global_storage_path
+    if storage_path:
+        logger.debug(f"Using storage path: {storage_path}")
+        return storage_path
         
     # Try environment variable if global path not set
     env_path = os.getenv("THINKMARK_STORAGE_PATH")

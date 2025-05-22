@@ -7,19 +7,39 @@ processing steps, with a streamlined memory-efficient approach.
 """
 
 import typer
-from typing import Optional
-from rich.console import Console
-from rich.prompt import Prompt
+from typing import Optional, Dict, Any
 from pathlib import Path
-import re
 import os 
 import shutil
+import yaml
 
 from thinkmark.utils import config_manager
-from thinkmark.utils.url import url_to_filename
-# Import the new unified pipeline
+from thinkmark.utils.url import get_site_directory
+from thinkmark.utils.logging import configure_logging
 from thinkmark.core.pipeline import run_pipeline
 from thinkmark.utils.config import get_config as get_site_scrape_config
+
+
+def load_config_file(config_path: Path) -> Dict[str, Any]:
+    """Load YAML configuration from a file.
+    
+    Args:
+        config_path: Path to the YAML configuration file
+        
+    Returns:
+        Dictionary containing the parsed configuration
+    """
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except Exception as e:
+        console.print(f"[yellow]Warning:[/yellow] Error loading config file: {e}")
+        console.print("Proceeding with default configuration...")
+        return {}
+
+# Configure console for rich output
+from rich.console import Console
+console = Console()
 
 # --- Typer Application Setup ---
 app = typer.Typer(
@@ -137,52 +157,40 @@ def run_unified_pipeline(
     """
     # Use global storage path if output_dir not specified
     storage_path = config_manager.get_storage_path()
-    if not output_dir and storage_path:
-        # Extract hostname from URL for directory name
-        import urllib.parse
-        hostname = urllib.parse.urlparse(url).netloc
-        output_dir = Path(storage_path) / hostname
-    elif not output_dir:
-        output_dir = Path("output") / url_to_filename(url, is_dir=True)
+    if output_dir is None:
+        output_dir = get_site_directory(url, base_dir=storage_path or "output")
     
     # Create config dict from file if provided
-    config_dict = None
-    if config_file:
-        try:
-            import yaml
-            with open(config_file, "r", encoding="utf-8") as f:
-                config_dict = yaml.safe_load(f)
-        except Exception as e:
-            console.print(f"[bold yellow]Warning:[/bold yellow] Error loading config file: {e}")
-            console.print("Proceeding with default configuration...")
+    config_dict = load_config_file(config_file) if config_file else None
+    
+    # Configure logging based on verbose flag
+    log_level = "DEBUG" if verbose else "INFO"
+    logger = configure_logging(log_level=log_level, verbose=verbose)
     
     try:
-        # Configure logging based on verbose flag
-        from thinkmark.utils.logging import configure_logging
-        log_level = "DEBUG" if verbose else "INFO"
-        configure_logging(log_level=log_level)
-        
         if verbose:
             console.print("[dim]Verbose mode enabled[/dim]")
         
         # Run the unified pipeline
         result_dir = run_pipeline(
             url=url,
-            output_dir=output_dir,
-            config=config_dict,
+            output_dir=Path(output_dir),
+            config=config_dict or {},
             api_key=api_key,
             build_vector_index=vector_index,
             verbose=verbose
         )
         
-        console.print(f"\nProcessing pipeline for {url} completed!")
+        console.print(f"\n[green]✓ Processing pipeline for {url} completed![/green]")
         console.print(f"Final content available at: {result_dir}")
+        return result_dir
+        
     except Exception as e:
-        # Avoid Rich markup completely for error messages
-        import sys
-        print("\nERROR: Pipeline execution failed", file=sys.stderr)
-        print(f"Error details: {str(e)}", file=sys.stderr)
-        raise typer.Exit(code=1)
+        logger.error(f"Pipeline execution failed: {str(e)}", exc_info=verbose)
+        console.print(f"\n[red]✗ ERROR: Pipeline execution failed[/red]")
+        if verbose:
+            console.print(f"[dim]Error details: {str(e)}[/dim]")
+        raise typer.Exit(code=1) from e
 
 @app.command("ingest")
 def ingest_site(
@@ -228,13 +236,8 @@ def ingest_site(
         console.print("Please run `thinkmark init` first to set up a storage location.")
         raise typer.Exit(code=1)
     
-    # Extract a site name from the URL (hostname by default)
-    import urllib.parse
-    hostname = urllib.parse.urlparse(url).netloc
-    site_name = hostname or url_to_filename(url, is_dir=True)
-
-    # Define the site's output directory
-    site_final_output_dir = Path(storage_path) / site_name
+    # Get the site's output directory
+    site_final_output_dir = Path(get_site_directory(url, base_dir=storage_path))
     
     # Check if site already exists
     if site_final_output_dir.exists() and not force_reingest:
@@ -246,15 +249,23 @@ def ingest_site(
     console.print(f"Site will be stored at: {site_final_output_dir}")
 
     site_final_output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Load site config if provided
+    config_dict = load_config_file(site_config_file) if site_config_file else {}
 
     try:
+        # Configure logging based on verbose flag
+        log_level = "DEBUG" if verbose else "INFO"
+        logger = configure_logging(log_level=log_level, verbose=verbose)
+        
         # Use the new unified pipeline
         run_pipeline(
             url=url,
             output_dir=site_final_output_dir,
-            config=site_config_file,
+            config=config_dict,
             api_key=api_key,
-            build_vector=build_vector_index
+            build_vector_index=build_vector_index,
+            verbose=verbose
         )
     except Exception as e:
         console.print(f"[bold red]Error during ingestion process for {url}:[/bold red]")

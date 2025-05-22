@@ -41,14 +41,45 @@ def is_url_allowed(
 
     return True
 
-def url_to_filename(url: str) -> str:
-    """Convert URL to a valid filename."""
+def url_to_filename(url: str, is_dir: bool = False) -> str:
+    """Convert URL to a valid filename or directory name.
+    
+    Args:
+        url: The URL to convert
+        is_dir: If True, returns a directory name without file extension
+        
+    Returns:
+        A filesystem-safe string derived from the URL
+    """
     from slugify import slugify
 
     parsed = urlparse(url)
-    domain = parsed.netloc
+    domain = parsed.netloc or 'site'  # Fallback if no netloc
     path = parsed.path.strip("/")
-
+    
+    # For directory names, we want just the domain
+    if is_dir:
+        return slugify(domain)
+        
+    # For filenames, include the path components
     if path:
         return f"{slugify(domain)}-{slugify(path)}.html"
     return f"{slugify(domain)}.html"
+
+
+def get_site_directory(url: str, base_dir: str = None) -> str:
+    """Get the filesystem path for a site's directory.
+    
+    Args:
+        url: The site URL
+        base_dir: Optional base directory (defaults to current directory)
+        
+    Returns:
+        Absolute path to the site's directory
+    """
+    from pathlib import Path
+    
+    dir_name = url_to_filename(url, is_dir=True)
+    if base_dir:
+        return str(Path(base_dir).resolve() / dir_name)
+    return dir_name

@@ -192,6 +192,7 @@ def annotate_stage(state: PipelineState, api_key: Optional[str] = None) -> Pipel
         Updated pipeline state with annotated documents
     """
     from thinkmark.annotate.adapter import process_document as annotate_document
+    from thinkmark.annotate.client import process_document as llm_process_document
     
     if not api_key:
         raise ValueError("API key required for annotation")
@@ -232,8 +233,8 @@ def annotate_stage(state: PipelineState, api_key: Optional[str] = None) -> Pipel
                     "url": parent_doc.url
                 }
             
-            # Annotate the document
-            annotated_content = annotate_document(
+            # Annotate the document using the client function directly
+            annotated_content = llm_process_document(
                 doc.content,
                 doc.url,
                 doc.title,

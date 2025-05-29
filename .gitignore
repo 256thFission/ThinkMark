@@ -1,0 +1,70 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ThinkMark specific
+output/
+logs/
+**/output/
+**/logs/
+**/vector_index/
+**/raw_html/
+**/annotated/
+**/content/
+page_info.json
+parent_map.json
+urls_map.jsonl
+page_hierarchy.json
+*.html
+test_*.py
+*_test.py
+
+# Claude settings
+**/.claude/settings.local.json
+
+# Build artifacts
+uv
+*.whl

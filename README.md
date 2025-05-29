@@ -33,6 +33,9 @@ uv install --group mcp --group dev
 
 ### Basic Usage
 ```bash
+#Run the init command to set your storage path
+thinkmark init
+
 # Process documentation site with full pipeline
 thinkmark pipeline https://docs.example.com --vector-index
 

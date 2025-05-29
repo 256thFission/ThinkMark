@@ -10,8 +10,8 @@ __pycache__
 <typer.models.OptionInfo object at 0x7f9cdb8ed400>/llms.txt
 *.txt
 *.whl
-.env
 *.md
+.env
 *.json
 output-md/raw_html
 llama_docs/

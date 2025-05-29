@@ -161,6 +161,53 @@ def build_index(
         raise
 
 
+def setup_retrieval(
+    index,
+    use_hybrid: bool = True,
+    similarity_top_k: int = 3,
+    similarity_cutoff: float = 0.7
+):
+    """
+    Set up a retrieval system, either hybrid or vector-only.
+    
+    Args:
+        index: The loaded vector index
+        use_hybrid: Whether to use hybrid search (vector + BM25)
+        similarity_top_k: Number of results to retrieve
+        similarity_cutoff: Minimum similarity score
+        
+    Returns:
+        Configured retriever
+    """
+    from thinkmark.vector.hybrid_search import setup_hybrid_retrieval
+    
+    if not use_hybrid:
+        logger.info("Setting up standard vector retriever")
+        return index.as_retriever(
+            similarity_top_k=similarity_top_k
+        )
+    
+    # Get all nodes from the index for BM25
+    # Get all ref doc info
+    ref_doc_info_dict = index.docstore.get_all_ref_doc_info() or {}
+
+    # Gather all node_ids from the ref doc info
+    node_ids = []
+    for ref_doc in ref_doc_info_dict.values():
+        node_ids.extend(ref_doc.node_ids)
+
+    # Fetch all nodes
+    nodes = index.docstore.get_nodes(node_ids)
+    logger.info(f"Setting up hybrid retriever with {len(nodes)} nodes")
+
+    # Set up hybrid retrieval
+    return setup_hybrid_retrieval(
+        vector_index=index,
+        nodes=nodes,
+        similarity_top_k=similarity_top_k
+    )
+
+
 def load_index(persist_dir: Path):
     """
     Load an existing vector index from disk.

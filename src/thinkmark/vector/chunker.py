@@ -1,10 +1,11 @@
 """
 Chunking + vector-index helpers for ThinkMark docs.
-Advanced chunking preserves document structure, tables and code blocks.
+Enhanced chunking with multi-layered approach (semantic, sentence-based, hierarchical)
+and content-type awareness (code, explanation, mixed).
 """
 import re
 from pathlib import Path
-from typing import List, Dict, Union, Tuple, Optional, ClassVar
+from typing import List, Dict, Union, Tuple, Optional, ClassVar, Any
 from dataclasses import dataclass, field
 from typing_extensions import Annotated
 
@@ -12,8 +13,15 @@ from llama_index.core import SimpleDirectoryReader, Document
 from llama_index.core.schema import TextNode, NodeRelationship, RelatedNodeInfo
 from llama_index.core.node_parser import NodeParser, SentenceSplitter
 from pydantic import Field, PrivateAttr
+
 from thinkmark.utils.logging import configure_logging
 from thinkmark.utils.paths import ensure_path
+from thinkmark.utils.json_io import load_json
+
+# Import modularized components
+from thinkmark.vector.content_detection import detect_content_type
+from thinkmark.vector.metadata_enrichment import enrich_node_metadata
+from thinkmark.vector.chunking_strategies import create_enhanced_chunker
 
 logger = configure_logging(module_name="thinkmark.vector.chunker")
 
@@ -339,15 +347,19 @@ class StructureAwareNodeParser(NodeParser):
         return all_nodes
 
 
+
+
+
 class Chunker:
-    """Chunk ThinkMark docs for vector indexing. Handles 'annotated' subfolder(s)."""
+    """Enhanced chunker for ThinkMark docs with content-aware processing."""
     def __init__(self, chunk_size: int = 1024, chunk_overlap: int = 20):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
+        self.chunkers = create_enhanced_chunker(chunk_size, chunk_overlap)
     
     def chunk_documents(self, input_dir: Union[str, Path]):
         """
-        Load documents from appropriate directories and chunk them preserving structure.
+        Load documents from appropriate directories and chunk them with enhanced strategies.
         
         Args:
             input_dir: Input directory containing markdown files, can be:
@@ -356,18 +368,55 @@ class Chunker:
                       - A directory of site directories, each with an 'annotated' subdirectory
                       
         Returns:
-            List of nodes created from the documents
+            List of nodes created from the documents with enriched metadata
         """
         input_dir = ensure_path(input_dir)
+        hierarchy_data = self._load_hierarchy_data(input_dir)
+        
+        # Load documents from appropriate directories
+        docs = self._load_documents(input_dir)
+        
+        # Process each document with appropriate chunking strategy
+        all_nodes = []
+        for doc in docs:
+            # Determine content type for the whole document first
+            doc_content_type = detect_content_type(doc.text)
+            chunker = self.chunkers.get(doc_content_type, self.chunkers['default'])
+            
+            # Chunk the document
+            nodes = chunker.get_nodes_from_documents([doc])
+            
+            # Enrich metadata for each node
+            for node in nodes:
+                file_path = doc.metadata.get('file_path', doc.metadata.get('file_name', ''))
+                enrich_node_metadata(node, file_path, hierarchy_data)
+            
+            all_nodes.extend(nodes)
+        
+        logger.info(f"Generated {len(all_nodes)} enhanced nodes from {len(docs)} documents")
+        return all_nodes
+    
+    def _load_documents(self, input_dir: Path) -> List[Document]:
+        """
+        Load documents from the appropriate directory structure.
+        
+        Args:
+            input_dir: Input directory path
+            
+        Returns:
+            List of Document objects
+        """
         def load_annotated(dir_path):
             return SimpleDirectoryReader(str(dir_path), required_exts=[".md"]).load_data()
         
-        # Load documents from appropriate directories (same as before)
         docs = []
+        # Case 1: 'annotated' directory itself
         if input_dir.name == 'annotated':
             docs = load_annotated(input_dir)
+        # Case 2: Directory containing 'annotated' subdirectory
         elif (input_dir / 'annotated').is_dir():
             docs = load_annotated(input_dir / 'annotated')
+        # Case 3: Directory of site directories, each with 'annotated' subfolder
         else:
             for site_dir in input_dir.iterdir():
                 ann = site_dir / 'annotated'
@@ -376,15 +425,47 @@ class Chunker:
                     for doc in site_docs:
                         doc.metadata['site_name'] = site_dir.name
                     docs.extend(site_docs)
+            # Fallback if no site directories found
             if not docs:
                 docs = load_annotated(input_dir)
         
-        # Use structure-aware parser instead of SentenceSplitter
-        splitter = StructureAwareNodeParser(
-            chunk_size=self.chunk_size, 
-            chunk_overlap=self.chunk_overlap
-        )
+        return docs
+    
+    def _load_hierarchy_data(self, input_dir: Path) -> Dict[str, Any]:
+        """
+        Load hierarchy data from page_hierarchy.json if it exists.
         
-        nodes = splitter.get_nodes_from_documents(docs)
-        logger.info(f"Generated {len(nodes)} structure-preserving nodes from {len(docs)} documents")
-        return nodes
+        Args:
+            input_dir: Input directory
+            
+        Returns:
+            Hierarchy data or empty dict if not found
+        """
+        # Check common locations for hierarchy data
+        potential_paths = [
+            input_dir / "page_hierarchy.json",
+            input_dir.parent / "page_hierarchy.json",
+            input_dir / "hierarchy.json",
+            input_dir.parent / "hierarchy.json"
+        ]
+        
+        # If input_dir has site directories, check each one
+        if not any(p.name == 'annotated' for p in input_dir.iterdir() if p.is_dir()):
+            for site_dir in input_dir.iterdir():
+                if site_dir.is_dir():
+                    potential_paths.extend([
+                        site_dir / "page_hierarchy.json",
+                        site_dir / "hierarchy.json"
+                    ])
+        
+        # Try to load from any of the potential paths
+        for path in potential_paths:
+            if path.exists():
+                try:
+                    logger.info(f"Loading hierarchy data from {path}")
+                    return load_json(path)
+                except Exception as e:
+                    logger.warning(f"Failed to load hierarchy from {path}: {e}")
+        
+        logger.warning("No hierarchy data found. Metadata enrichment will use fallback methods.")
+        return {}

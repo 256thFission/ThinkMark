@@ -18,7 +18,7 @@ ThinkMark is a powerful, modular pipeline that crawls, cleans, converts, annotat
 
 ## Installation
 
-ThinkMark now uses [UV](https://github.com/astral-sh/uv) for dependency management (instead of Poetry).
+ThinkMark now uses [UV](https://github.com/astral-sh/uv) for dependency management.
 
 ```bash
 # Create and activate a virtual environment
@@ -32,12 +32,6 @@ pip install -e '.[dev]'  # Includes development dependencies
 # pip install -e .
 ```
 
-### Prerequisites
-- Python 3.12 or higher
-- UV (recommended for faster dependency resolution):
-  ```bash
-  pipx install uv
-  ```
 
 
 ## CLI Usage
@@ -61,7 +55,7 @@ thinkmark pipeline URL [--output OUTPUT_DIR] [--config CONFIG_FILE] [--vector-in
 
 Example with vector indexing:
 ```bash
-thinkmark pipeline https://docs.example.com/ --vector-index --verbose
+thinkmark pipeline https://llama-stack.readthedocs.io/en/latest/ --vector-index --verbose
 ```
 
 ### Directory Structure
@@ -153,42 +147,53 @@ thinkmark vector query "How do I use the API?" --top-k 3 --show-sources
 
 ## MCP Server
 
-ThinkMark can run as a Model Context Protocol (MCP) server, exposing its pipeline and vector search capabilities as tools accessible via LLMs and other clients that support the MCP standard.
+ThinkMark can run as a Model Context Protocol (MCP) server, exposing its documentation querying capabilities to MCP-compatible clients like LLMs.
 
 ### Running the MCP Server
 
-```bash
-# Run with stdio transport (for LLM plugins)
-thinkmark mcp stdio [--log-level LOG_LEVEL] [--config CONFIG_FILE]
+Use the `run_mcp.py` script:
 
-# Run with HTTP transport (for web clients)
-thinkmark mcp http [--host HOST] [--port PORT] [--log-level LOG_LEVEL] [--config CONFIG_FILE]
+**Server-Sent Events (SSE) Transport:**
+```bash
+python run_mcp.py sse --host localhost --port 8080
 ```
+
+**Stdio Transport (for direct integration):**
+```bash
+python run_mcp.py stdio
+```
+
+**Key Runtime Options:**
+*   `--storage-path <PATH>`: Specify the ThinkMark data storage directory.
+*   `--claude-desktop`: Enable compatibility mode for Claude Desktop.
+*   `--log-level [DEBUG|INFO|WARNING|ERROR]`: Set the logging verbosity.
+*   `--openai-api-key <KEY>`: Provide an OpenAI API key if needed by underlying processes.
 
 ### Available MCP Tools
 
-When running as an MCP server, ThinkMark exposes these tools:
+Tools are registered automatically and can be discovered by MCP clients.
 
-- `scrape`: Scrape documentation from a website
-- `markify`: Convert HTML documentation to Markdown
-- `annotate`: Annotate Markdown documentation with LLM
-- `pipeline`: Run the complete documentation pipeline
-- `query_docs`: Query documents using a vector index for semantic search
+1.  **`list_available_docs`**
+    *   Description: Lists all available documentation sets and their vector indexes.
+    *   Arguments:
+        *   `base_path` (Optional[str]): Path to search for vector indexes (defaults to configured storage path).
+    *   Returns: A dictionary with a list of found document sets and their index paths.
+
+2.  **`query_docs`**
+    *   Description: Queries a specified vector index using semantic search.
+    *   Arguments:
+        *   `question` (str): The natural language question.
+        *   `persist_dir` (str): Path to the vector index directory.
+        *   `top_k` (int, default: 3): Number of results to return.
+        *   `similarity_threshold` (float, default: 0.7): Minimum similarity score for results.
+        *   `content_filter` (Optional[str]): Filter by content type (e.g., 'code', 'explanation').
+        *   `use_hybrid_search` (bool, default: True): Enable/disable hybrid search.
+    *   Returns: A dictionary containing the answer and source document chunks.
 
 ### Available MCP Resources
 
-- `resource://config_example`: Example configuration file
-- `resource://readme`: ThinkMark README file
-- `resource://hierarchy_template`: Example hierarchy JSON template
-- `resource://urls_map_template`: Example URLs map template
-
-### Usage with LLMs
-
-ThinkMark's MCP server uses FastMCP, making it compatible with any LLM or application that supports the Model Context Protocol. To connect:
-
-1. Start the MCP server: `thinkmark mcp stdio`
-2. Connect your LLM or application to the server
-3. The LLM can discover and use ThinkMark's tools and resources
+*   `resource://readme`: Provides the content of this README file.
+*   `resource://query_example`: Provides a JSON example for the `query_docs` tool.
 
 ---
 
@@ -212,15 +217,15 @@ Use the ThinkMark prep CLI to scrape, markify, and annotate your documentation, 
 
 ```bash
 # Example: Preprocess docs and build vector index
-thinkmark pipeline https://docs.example.com/ --vector-index --output output/docs_example_com
+thinkmark pipeline https://llama-stack.readthedocs.io/en/latest/ --vector-index 
 ```
 
 #### 2. Start the MCP Query Server
 Start the ThinkMark MCP server to enable LLMs or clients to discover and query your documentation. (Compatible with FastMCP, Claude Desktop, and other MCP clients.)
 
 ```bash
-# Start the MCP server (Web mode)
-python run_mcp.py web --host 0.0.0.0 --port 8080
+# Start the MCP server (SSE mode)
+python run_mcp.py sse --host 0.0.0.0 --port 8080
 
 # Or in stdio mode for direct LLM integration
 python run_mcp.py stdio

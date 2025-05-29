@@ -13,8 +13,8 @@ import argparse
 parser = argparse.ArgumentParser(description="Run ThinkMark MCP Server")
 parser.add_argument(
     "transport", 
-    choices=["web", "stdio"], 
-    help="Transport mode (web or stdio)"
+    choices=["sse", "stdio"], 
+    help="Transport mode (sse or stdio)"
 )
 parser.add_argument(
     "--host", 
@@ -79,9 +79,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=getattr(logging, args.log_level))
     
     # Start the server with the appropriate transport
-    if args.transport == "web":
-        print(f"Starting ThinkMark MCP Server (web transport) on {args.host}:{args.port}")
-        mcp.run(transport="web", host=args.host, port=args.port)
+    if args.transport == "sse":
+        print(f"Starting ThinkMark MCP Server (sse transport) on {args.host}:{args.port}")
+        mcp.run(transport="sse", host=args.host, port=args.port)
     else:
         print("Starting ThinkMark MCP Server (stdio transport)")
         mcp.run(transport="stdio")

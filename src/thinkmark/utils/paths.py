@@ -102,6 +102,20 @@ def get_data_dir(specified_path: Optional[Union[str, Path]] = None) -> Path:
     if "data_dir" in _path_cache:
         return _path_cache["data_dir"]
     
+    # Check for path in config file
+    try:
+        from thinkmark.utils.config_manager import load_config
+        config = load_config()
+        if "storage_path" in config and config["storage_path"]:
+            config_path = Path(config["storage_path"])
+            if config_path.exists() or config_path.parent.exists():
+                config_path.mkdir(parents=True, exist_ok=True)
+                _path_cache["data_dir"] = config_path
+                return config_path
+    except (ImportError, Exception):
+        # If there's any issue loading the config, fall back to defaults
+        pass
+    
     # Look for first existing data directory with some content
     for path in DATA_DIR_CANDIDATES:
         if path.exists() and path.is_dir():
@@ -110,7 +124,7 @@ def get_data_dir(specified_path: Optional[Union[str, Path]] = None) -> Path:
                 return path
     
     # No valid directory found, create first option
-    path = DATA_DIRS[0]
+    path = DATA_DIR_CANDIDATES[0]
     path.mkdir(parents=True, exist_ok=True)
     _path_cache["data_dir"] = path
     return path

@@ -39,6 +39,7 @@ def load_config_file(config_path: Path) -> Dict[str, Any]:
 
 # Configure console for rich output
 from rich.console import Console
+from rich.prompt import Prompt
 console = Console()
 
 # --- Typer Application Setup ---

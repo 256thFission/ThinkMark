@@ -1,8 +1,5 @@
 # ThinkMark
-
-A documentation processing pipeline that scrapes, converts, and annotates documentation websites into LLM-friendly formats with vector search capabilities.
-
-## Features
+It's open source cursor docs: scrape documentation sites, convert them to LLM-friendy format, and inject it into your LLM system of choice as an MCP tool!
 
 - **Scrape** documentation sites with intelligent crawling
 - **Convert** HTML to clean, structured Markdown
@@ -36,6 +33,9 @@ uv install --group mcp --group dev
 
 ### Basic Usage
 ```bash
+#Run the init command to set your storage path
+thinkmark init
+
 # Process documentation site with full pipeline
 thinkmark pipeline https://docs.example.com --vector-index
 

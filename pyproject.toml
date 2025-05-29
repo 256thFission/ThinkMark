@@ -8,10 +8,10 @@ version = "0.2.0"
 description = "Documentation processing pipeline that scrapes, converts, and annotates websites into LLM-friendly formats with vector search"
 readme = "README.md"
 authors = [
-    { name = "ThinkMark Team" },
+    { name = "Phillip Lin" },
 ]
 maintainers = [
-    { name = "ThinkMark Team" },
+    { name = "Phillip Lin" },
 ]
 requires-python = ">=3.12"
 license = { text = "MIT" }
@@ -29,7 +29,6 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: Markdown",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-urls = { Homepage = "https://github.com/your-org/ThinkMark", Repository = "https://github.com/your-org/ThinkMark.git", Issues = "https://github.com/your-org/ThinkMark/issues" }
 
 dependencies = [
     "scrapy>=2.11,<3.0",

@@ -165,10 +165,13 @@ class PipelineState:
             with open(doc_path, "w", encoding="utf-8") as f:
                 f.write(doc.content)
             
-            # Save metadata separately
+            # Save document attributes (excluding content) and metadata
+            doc_as_dict = doc.to_dict()
+            del doc_as_dict['content']  # Content is saved in the .md file
+
             meta_path = self.content_dir / f"{doc.id}.meta.json"
             with open(meta_path, "w", encoding="utf-8") as f:
-                json.dump(doc.metadata, f, indent=2)
+                json.dump(doc_as_dict, f, indent=2)
     
     @classmethod
     def load(cls, site_url: str, output_dir: Path) -> 'PipelineState':
@@ -206,25 +209,27 @@ class PipelineState:
                 content_file = content_dir / f"{doc_id}.md"
                 
                 if content_file.exists():
-                    # Load metadata
+                    # Load the dictionary saved by to_dict (which excludes content)
                     with open(meta_file, "r", encoding="utf-8") as f:
-                        metadata = json.load(f)
-                    
-                    # Load content
+                        doc_data_from_meta = json.load(f)
+                
+                    # Load content separately
                     with open(content_file, "r", encoding="utf-8") as f:
                         content = f.read()
+                
+                    # Add content back to the dictionary for Document.from_dict
+                    doc_data_from_meta['content'] = content
                     
-                    # Create document
-                    doc = Document(
-                        id=doc_id,
-                        url=next((url for url, id in state.url_map.items() if id == doc_id), ""),
-                        title=metadata.get("title", ""),
-                        content=content,
-                        metadata=metadata,
-                        parent_id=metadata.get("parent_id"),
-                        children_ids=metadata.get("children_ids", [])
-                    )
-                    
+                    # Use Document.from_dict to reconstruct the Document object
+                    # Ensure the doc_id from the filename matches the one in the data, or prioritize one.
+                    # Document.from_dict will use 'id' from doc_data_from_meta if present.
+                    if 'id' not in doc_data_from_meta or doc_data_from_meta['id'] != doc_id:
+                        # This case should ideally not happen if filenames are derived from doc.id
+                        # If it does, we might prefer the ID from the filename or log a warning.
+                        # For now, ensure the loaded data uses the ID from the filename if different.
+                        doc_data_from_meta['id'] = doc_id
+
+                    doc = Document.from_dict(doc_data_from_meta)
                     state.documents[doc_id] = doc
         
         return state

@@ -3,20 +3,24 @@
 from urllib.parse import urlparse, urljoin, urldefrag
 from typing import Optional, List
 import re
+from slugify import slugify # Moved import here
 
 def normalize_url(url: str) -> str:
-    """Normalize a URL by removing fragments and trailing slashes."""
-    # Remove fragment
-    url, _ = urldefrag(url)
+    """Normalize a URL by removing fragments and ensuring no trailing slashes on the path, except for the root."""
+    url_no_frag, _ = urldefrag(url)
+    parsed = urlparse(url_no_frag)
+    
+    current_path = parsed.path
+    
+    # If the path is not the root path ("/") and ends with a slash, remove the trailing slash.
+    if current_path != "/" and current_path.endswith("/"):
+        new_path = current_path.rstrip("/")
+    else:
+        # Preserve the path if it's the root ("/") or already has no trailing slash (e.g. "/path", "")
+        new_path = current_path
+        
+    return parsed._replace(path=new_path, fragment="", params="", query=parsed.query).geturl()
 
-    # Remove trailing slash except for domain root
-    parsed = urlparse(url)
-    if parsed.path.rstrip("/") or not parsed.netloc:
-        if parsed.path.endswith("/"):
-            path = parsed.path.rstrip("/")
-            url = url[:-len(parsed.path)] + path + url[-len(parsed.path) + len(path):]
-
-    return url
 
 def is_url_allowed(
     url: str,
@@ -51,8 +55,7 @@ def url_to_filename(url: str, is_dir: bool = False) -> str:
     Returns:
         A filesystem-safe string derived from the URL
     """
-    from slugify import slugify
-
+    # slugify is now imported at the module level
     parsed = urlparse(url)
     domain = parsed.netloc or 'site'  # Fallback if no netloc
     path = parsed.path.strip("/")
@@ -63,7 +66,9 @@ def url_to_filename(url: str, is_dir: bool = False) -> str:
         
     # For filenames, include the path components
     if path:
-        return f"{slugify(domain)}-{slugify(path)}.html"
+        # Replace slashes in path with hyphens before slugifying
+        processed_path = path.replace('/', '-')
+        return f"{slugify(domain)}-{slugify(processed_path)}.html"
     return f"{slugify(domain)}.html"
 
 

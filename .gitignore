@@ -1,26 +1,17 @@
-# Python
-*.pyc
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.pyc
 *.pyo
 *.pyd
-.Python
+
+# Distribution / packaging
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
+*.whl
 *.egg
 
-# Environment
+# Virtual environments
 .env
 .venv
 env/
@@ -29,14 +20,14 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDE
+# IDE settings & temporary files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
+# OS-generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -45,26 +36,28 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# ThinkMark specific
-output/
-logs/
+# ThinkMark Project Specific Output & Logs
+# These directories can appear at various levels
 **/output/
 **/logs/
 **/vector_index/
-**/raw_html/
-**/annotated/
-**/content/
-page_info.json
-parent_map.json
-urls_map.jsonl
-page_hierarchy.json
-*.html
-test_*.py
-*_test.py
+**/raw_html/ # If this is intermediate output
+**/annotated/ # If this is intermediate output
+**/content/   # If this is intermediate output from models.py save
+
+# Specific output files (if they can appear outside of /output/)
+# page_info.json
+# parent_map.json
+# urls_map.jsonl # Likely covered by **/output/
+# page_hierarchy.json # Likely covered by **/output/
 
 # Claude settings
 **/.claude/settings.local.json
 
-# Build artifacts
-uv
-*.whl
+# Local binaries (if downloaded into project)
+# uv
+
+# Python test and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
